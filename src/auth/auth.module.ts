@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JWT_ACCESS_SECRET } from 'src/config';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
-import { RedisModule } from 'src/redis/redis.module';
+// import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   controllers: [AuthController],
@@ -19,7 +19,7 @@ import { RedisModule } from 'src/redis/redis.module';
       secret: JWT_ACCESS_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
-    RedisModule,
+    // RedisModule,
   ],
 })
 export class AuthModule {}
