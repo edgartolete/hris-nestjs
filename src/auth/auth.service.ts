@@ -4,6 +4,7 @@ import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { JWT_REFRESH_SECRET } from 'src/config';
+import { RedisService } from 'src/redis/redis.service';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -18,6 +19,7 @@ export class AuthService {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
+    private redisService: RedisService,
   ) {}
 
   async validateUser(loginUser: LoginUserDto): Promise<SignInData | null> {
@@ -41,6 +43,8 @@ export class AuthService {
       secret: JWT_REFRESH_SECRET,
       expiresIn: '15d',
     });
+
+    this.redisService.set('test', accessToken);
 
     return {
       accessToken,
