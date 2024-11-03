@@ -3,27 +3,25 @@ import {
   Post,
   HttpCode,
   HttpStatus,
-  Body,
   Get,
   UseGuards,
+  Request,
 } from '@nestjs/common';
-import { LoginUserDto } from './dto/login-user.dto';
-import { AuthService } from './auth.service';
-import { AuthGuard } from './guards/auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { TokenAuthGuard } from './guards/token-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
-
   @HttpCode(HttpStatus.OK)
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() loginUser: LoginUserDto) {
-    return this.authService.authenticate(loginUser);
+  async login(@Request() req: any) {
+    return req.user;
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(TokenAuthGuard)
   @Get('me')
-  getSelfInfo() {
-    return true;
+  getSelfInfo(@Request() req: any) {
+    return req.user;
   }
 }

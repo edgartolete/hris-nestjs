@@ -2,13 +2,12 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class TokenAuthGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext) {
@@ -26,12 +25,12 @@ export class AuthGuard implements CanActivate {
       const tokenPayload = await this.jwtService.verifyAsync(token);
 
       request.user = {
-        userId: tokenPayload.sub,
+        userId: tokenPayload.userId,
         username: tokenPayload.username,
       };
       return true;
     } catch (err) {
-      throw new InternalServerErrorException();
+      throw new UnauthorizedException();
     }
   }
 }

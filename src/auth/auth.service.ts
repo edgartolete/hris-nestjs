@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { GenerateTokenDto } from './dto/generate-token.dto';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = { accessToken: string; userId: number; username: string };
@@ -13,32 +14,19 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async authenticate(input: LoginUserDto): Promise<AuthResult> {
-    const user = await this.validateUser(input);
+  async validateUser(loginUser: LoginUserDto): Promise<SignInData | null> {
+    const user = await this.userService.findUserByname(loginUser.username);
 
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return this.signIn(user);
-  }
-
-  async validateUser(input: LoginUserDto): Promise<SignInData | null> {
-    const user = await this.userService.findUserByname(input.username);
-
-    if (user && user.password === input.password) {
-      return {
-        userId: user.userId,
-        username: user.username,
-      };
+    if (user && user.password === loginUser.password) {
+      return user;
     }
 
     return null;
   }
 
-  async signIn(user: SignInData): Promise<AuthResult> {
+  async signIn(user: GenerateTokenDto): Promise<AuthResult> {
     const tokenPayload = {
-      sub: user.userId,
+      userId: user.userId,
       username: user.username,
     };
 
