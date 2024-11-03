@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
-import { JWT_REFRESH_SECRET } from 'src/config';
 // import { RedisService } from 'src/redis/redis.service';
 import { ConfigService } from '@nestjs/config';
 
@@ -40,21 +39,27 @@ export class AuthService {
       username: user.username,
     };
 
-    const accessToken = await this.jwtService.signAsync(tokenPayload);
-    const refreshToken = await this.jwtService.signAsync(tokenPayload, {
-      secret: JWT_REFRESH_SECRET,
-      expiresIn: '15d',
-    });
+    try {
+      const accessToken = await this.jwtService.signAsync(tokenPayload);
 
-    // this.redisService.set('test', accessToken);
+      const refreshSecret =
+        this.configService.get<string>('JWT_REFRESH_SECRET');
 
-    const redisUrl = this.configService.get('REDIS_URL');
+      const refreshToken = await this.jwtService.signAsync(tokenPayload, {
+        secret: refreshSecret,
+        expiresIn: '15d',
+      });
 
-    return {
-      accessToken,
-      refreshToken: redisUrl,
-      username: user.username,
-      userId: user.userId,
-    };
+      // this.redisService.set('test', accessToken);
+
+      return {
+        accessToken,
+        refreshToken,
+        username: user.username,
+        userId: user.userId,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException();
+    }
   }
 }
