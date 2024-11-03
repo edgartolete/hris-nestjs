@@ -3,9 +3,15 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
+import { JWT_REFRESH_SECRET } from 'src/config';
 
 type SignInData = { userId: number; username: string };
-type AuthResult = { accessToken: string; userId: number; username: string };
+type AuthResult = {
+  accessToken: string;
+  refreshToken: string;
+  userId: number;
+  username: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -18,9 +24,9 @@ export class AuthService {
     const user = await this.userService.findUserByname(loginUser.username);
 
     if (user && user.password === loginUser.password) {
-      return user;
+      const { userId, username } = user;
+      return { userId, username };
     }
-
     return null;
   }
 
@@ -31,7 +37,16 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync(tokenPayload);
+    const refreshToken = await this.jwtService.signAsync(tokenPayload, {
+      secret: JWT_REFRESH_SECRET,
+      expiresIn: '15d',
+    });
 
-    return { accessToken, username: user.username, userId: user.userId };
+    return {
+      accessToken,
+      refreshToken,
+      username: user.username,
+      userId: user.userId,
+    };
   }
 }
