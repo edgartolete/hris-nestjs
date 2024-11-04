@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-// import { RedisModule } from 'src/redis/redis.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   controllers: [AuthController],
@@ -19,10 +19,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: { expiresIn: '1d' },
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRY'),
+        },
       }),
     }),
-    // RedisModule,
+    RedisModule,
   ],
 })
 export class AuthModule {}
