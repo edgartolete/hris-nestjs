@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RedisModule } from 'src/redis/redis.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   controllers: [AuthController],
@@ -14,6 +14,7 @@ import { RedisModule } from 'src/redis/redis.module';
   imports: [
     UsersModule,
     PassportModule,
+    CacheModule.register(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -24,7 +25,6 @@ import { RedisModule } from 'src/redis/redis.module';
         },
       }),
     }),
-    RedisModule,
   ],
 })
 export class AuthModule {}

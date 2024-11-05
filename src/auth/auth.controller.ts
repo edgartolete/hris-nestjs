@@ -21,8 +21,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req: any) {
-    return await this.authService.signIn(req.user);
+  async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const { refreshToken, ...rest } = await this.authService.signIn(req.user);
+    res.cookie('refreshToken', refreshToken);
+    return rest;
   }
 
   @Post('register')
