@@ -64,6 +64,7 @@ export class AuthService {
   }
 
   async generateRefreshToken(tokenPayload: SignInData): Promise<string> {
+    // TODO: sliding expiry; the longer the user used the same device. extend the refresh token expiry from 15 days to 3 months
     const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
     const refreshExpiry = this.configService.get<string>('JWT_REFRESH_EXPIRY');
 
@@ -74,6 +75,10 @@ export class AuthService {
   }
 
   async saveRefreshToken(token: string) {
-    //
+    // TODO: store the refreshToken to database together with signin metadata e.g, userId, refreshToken, expiry, device, ip, isActive.
+  }
+
+  async renewRefreshToken() {
+    //TODO: use token rotation
   }
 }
