@@ -5,7 +5,6 @@ COPY . /api
 WORKDIR /api
 
 RUN npm install
-#   && npm run build
 
 EXPOSE 8080
 
