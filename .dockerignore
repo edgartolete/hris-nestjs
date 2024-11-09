@@ -1,4 +1,9 @@
 .git
 .next
 .node_modules
+dist
 README.md
+.env
+.env.*
+docker-compose.yaml
+docker-compose.prod.yaml
