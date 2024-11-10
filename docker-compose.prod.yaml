@@ -19,12 +19,14 @@ services:
     ports:
       - 3306:3306
     env_file: .env.prod
+    environment:
+      - MySQL_TCP_PORT=3306
     volumes:
       - mysql_volume_data:/var/lib/mysql
     networks:
       - pse_analyzer_network
   phpmyadmin:
-    image: phpmyadmin:5.2.1-fpm-alpine
+    image: phpmyadmin:5.2.1-apache
     container_name: phpmyadmin
     restart: always
     ports:
@@ -34,7 +36,7 @@ services:
       PMA_HOST: db
       PMA_PORT: 3306
     volumes:
-      - mysql_volume_data:/var/lib/mysql
+      - phpmyadmin_volume_data:/var/lib/mysql
     networks:
       - pse_analyzer_network
     depends_on:
@@ -55,3 +57,4 @@ networks:
 volumes:
   redis_volume_data: 
   mysql_volume_data:
+  phpmyadmin_volume_data:

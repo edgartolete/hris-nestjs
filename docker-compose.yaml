@@ -49,6 +49,8 @@ services:
     container_name: api
     networks:
       - pse_analyzer_network
+    volumes:
+      - ./:/api
     depends_on:
       - redis
       - db
