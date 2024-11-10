@@ -47,6 +47,7 @@ services:
       - 8000:8000
     env_file: .env
     container_name: api
+    restart: always
     networks:
       - pse_analyzer_network
     volumes:
