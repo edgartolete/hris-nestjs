@@ -20,9 +20,9 @@ import { Photo } from './photos/photo.entity';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
-        host: 'db',
-        port: 3306,
-        username: 'root',
+        host: configService.get('DB_HOST'),
+        port: +configService.get('DB_PORT'),
+        username: configService.get('DB_USER'),
         password: configService.get('MYSQL_ROOT_PASSWORD'),
         database: configService.get('MYSQL_DATABASE'),
         entities: [User, Photo],
