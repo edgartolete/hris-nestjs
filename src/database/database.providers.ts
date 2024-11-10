@@ -1,8 +1,5 @@
 import { DataSource } from 'typeorm';
 
-console.log('# database: ', process.env.MYSQL_DATABASE);
-console.log('# root pass: ', process.env.MYSQL_ROOT_PASSWORD);
-
 export const databaseProviders = [
   {
     provide: 'DATA_SOURCE',

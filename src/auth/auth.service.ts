@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from 'src/users/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';
@@ -28,12 +28,13 @@ export class AuthService {
   ) {}
 
   async validateUser(loginUser: LoginUserDto): Promise<SignInData | null> {
-    const user = await this.userService.findUserByname(loginUser.username);
+    // const user = await this.userService.findUserByname();
 
-    if (user && user.password === loginUser.password) {
-      const { userId, username } = user;
-      return { userId, username };
-    }
+    // if (user && user.password === loginUser.password) {
+    // const { userId, username } = user;
+    // return { userId, username };
+    // return null;
+    // }
     return null;
   }
 

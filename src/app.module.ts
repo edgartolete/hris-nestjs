@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './users/user.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
-// import { DatabaseModule } from './database/database.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './users/user.entity';
+import { Photo } from './photos/photo.entity';
 
 @Module({
   imports: [
@@ -14,18 +15,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'db',
-      port: 3306,
-      username: 'root',
-      password: '2QmnFgzDrsjs9q',
-      database: 'pse_db',
-      entities: [],
-      synchronize: true,
-      keepConnectionAlive: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: 'db',
+        port: 3306,
+        username: 'root',
+        password: configService.get('MYSQL_ROOT_PASSWORD'),
+        database: configService.get('MYSQL_DATABASE'),
+        entities: [User, Photo],
+        synchronize: configService.get('NODE_ENV') === 'development',
+      }),
     }),
-    // DatabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
