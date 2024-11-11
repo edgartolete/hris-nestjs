@@ -28,13 +28,13 @@ export class AuthService {
   ) {}
 
   async validateUser(loginUser: LoginUserDto): Promise<SignInData | null> {
-    // const user = await this.userService.findUserByname();
+    const user = await this.userService.findUserByname(loginUser.username);
 
-    // if (user && user.password === loginUser.password) {
-    // const { userId, username } = user;
-    // return { userId, username };
-    // return null;
-    // }
+    if (user && user.password === loginUser.password) {
+      const { id, username } = user;
+      return { userId: id, username };
+    }
+
     return null;
   }
 
@@ -49,6 +49,7 @@ export class AuthService {
       this.saveAccessToken(accessToken, user.userId);
 
       const refreshToken = await this.generateRefreshToken(tokenPayload);
+      this.saveRefreshToken(refreshToken, user.userId);
 
       return {
         accessToken,
@@ -60,6 +61,7 @@ export class AuthService {
       throw new InternalServerErrorException();
     }
   }
+
   async saveAccessToken(token: string, userId: number) {
     await this.cacheManager.set(token, userId, 1000 * 60 * 60); // 1hr
   }
@@ -75,7 +77,7 @@ export class AuthService {
     });
   }
 
-  async saveRefreshToken(token: string) {
+  async saveRefreshToken(token: string, userId: number) {
     // TODO: store the refreshToken to database together with signin metadata e.g, userId, refreshToken, expiry, device, ip, isActive.
   }
 

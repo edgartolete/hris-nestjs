@@ -19,8 +19,10 @@ export class UsersService {
     // return `This action returns all users`;
   }
 
-  async findUserByname(): Promise<User | null> {
-    return null;
+  async findUserByname(username: string): Promise<User | null> {
+    return await this.userRepository.findOneBy({
+      username: username.toLowerCase(),
+    });
   }
 
   findOne(id: number) {
