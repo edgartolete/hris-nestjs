@@ -9,6 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { CreateSessionDto } from 'src/sessions/dto/create-session.dto';
+import { addDays } from 'date-fns';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -38,7 +40,11 @@ export class AuthService {
     return null;
   }
 
-  async signIn(user: GenerateTokenDto): Promise<AuthResult> {
+  async signIn(
+    user: GenerateTokenDto,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<AuthResult> {
     const tokenPayload: SignInData = {
       userId: user.userId,
       username: user.username,
@@ -49,7 +55,13 @@ export class AuthService {
       this.saveAccessToken(accessToken, user.userId);
 
       const refreshToken = await this.generateRefreshToken(tokenPayload);
-      this.saveRefreshToken(refreshToken, user.userId);
+      this.saveRefreshToken({
+        refreshToken,
+        userId: user.userId,
+        ipAddress,
+        userAgent,
+        expiryDate: addDays(new Date(), 15),
+      });
 
       return {
         accessToken,
@@ -77,7 +89,7 @@ export class AuthService {
     });
   }
 
-  async saveRefreshToken(token: string, userId: number) {
+  async saveRefreshToken(createSession: CreateSessionDto) {
     // TODO: store the refreshToken to database together with signin metadata e.g, userId, refreshToken, expiry, device, ip, isActive.
   }
 

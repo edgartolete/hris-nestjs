@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/user.entity';
 import { Photo } from './photos/photo.entity';
+import { SessionsModule } from './sessions/sessions.module';
+import { Session } from './sessions/session.entity';
 
 @Module({
   imports: [
@@ -25,10 +27,11 @@ import { Photo } from './photos/photo.entity';
         username: configService.get('DB_USER'),
         password: configService.get('MYSQL_ROOT_PASSWORD'),
         database: configService.get('MYSQL_DATABASE'),
-        entities: [User, Photo],
+        entities: [User, Photo, Session],
         synchronize: configService.get('NODE_ENV') === 'development',
       }),
     }),
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
