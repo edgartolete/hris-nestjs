@@ -21,10 +21,6 @@ export class SessionsService {
       .execute();
   }
 
-  findAll() {
-    return `This action returns all sessions`;
-  }
-
   findOne(id: number) {
     return `This action returns a #${id} session`;
   }
