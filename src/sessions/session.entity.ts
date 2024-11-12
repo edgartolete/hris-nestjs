@@ -20,6 +20,9 @@ export class Session {
   ipAddress: string;
 
   @Column()
+  userAgent: string;
+
+  @Column()
   expiryDate: Date;
 
   @CreateDateColumn()

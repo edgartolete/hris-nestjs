@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CreateSessionDto } from 'src/sessions/dto/create-session.dto';
 import { addDays } from 'date-fns';
+import { SessionsService } from 'src/sessions/sessions.service';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -18,6 +19,7 @@ type AuthResult = {
   refreshToken: string;
   userId: number;
   username: string;
+  result?: any;
 };
 
 @Injectable()
@@ -26,6 +28,7 @@ export class AuthService {
     private userService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private sessionService: SessionsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
@@ -55,13 +58,18 @@ export class AuthService {
       this.saveAccessToken(accessToken, user.userId);
 
       const refreshToken = await this.generateRefreshToken(tokenPayload);
-      this.saveRefreshToken({
+
+      const { identifiers } = await this.saveRefreshToken({
         refreshToken,
         userId: user.userId,
         ipAddress,
         userAgent,
         expiryDate: addDays(new Date(), 15),
       });
+
+      if (!Array.isArray(identifiers) || identifiers.length === 0) {
+        throw new InternalServerErrorException('refreshToken inserting failed');
+      }
 
       return {
         accessToken,
@@ -75,7 +83,7 @@ export class AuthService {
   }
 
   async saveAccessToken(token: string, userId: number) {
-    await this.cacheManager.set(token, userId, 1000 * 60 * 60); // 1hr
+    await this.cacheManager.set(token, userId, 1000 * 60 * 60); // 1hr TTL
   }
 
   async generateRefreshToken(tokenPayload: SignInData): Promise<string> {
@@ -90,7 +98,7 @@ export class AuthService {
   }
 
   async saveRefreshToken(createSession: CreateSessionDto) {
-    // TODO: store the refreshToken to database together with signin metadata e.g, userId, refreshToken, expiry, device, ip, isActive.
+    return await this.sessionService.create(createSession);
   }
 
   async renewRefreshToken() {

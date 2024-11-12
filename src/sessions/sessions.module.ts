@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Session } from './session.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session], 'sessionConnection')],
+  imports: [TypeOrmModule.forFeature([Session])],
   providers: [SessionsService],
   exports: [SessionsService],
 })

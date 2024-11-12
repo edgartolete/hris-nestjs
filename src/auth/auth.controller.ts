@@ -26,12 +26,15 @@ export class AuthController {
   async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     const ipAddress = req.headers['x-forwarded-for'] || req.ip || '';
     const userAgent = req.headers['user-agent'] || '';
+
     const { refreshToken, ...rest } = await this.authService.signIn(
       req.user,
       ipAddress,
       userAgent,
     );
+
     res.cookie('refreshToken', refreshToken);
+
     return rest;
   }
 

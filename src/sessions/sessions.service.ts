@@ -3,18 +3,22 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { Repository } from 'typeorm';
 import { Session } from './session.entity';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class SessionsService {
   constructor(
-    @InjectDataSource('sessionConnection')
+    @InjectRepository(Session)
     private sessionRepository: Repository<Session>,
   ) {}
 
   async create(createSessionDto: CreateSessionDto) {
-    return await this.sessionRepository.insert({
-    });
+    return await this.sessionRepository
+      .createQueryBuilder()
+      .insert()
+      .into('session')
+      .values({ ...createSessionDto })
+      .execute();
   }
 
   findAll() {
