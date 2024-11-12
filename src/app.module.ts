@@ -6,7 +6,6 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/user.entity';
-import { Photo } from './photos/photo.entity';
 import { SessionsModule } from './sessions/sessions.module';
 import { Session } from './sessions/session.entity';
 
@@ -27,7 +26,7 @@ import { Session } from './sessions/session.entity';
         username: configService.get('DB_USER'),
         password: configService.get('MYSQL_ROOT_PASSWORD'),
         database: configService.get('MYSQL_DATABASE'),
-        entities: [User, Photo, Session],
+        entities: [User, Session],
         synchronize: configService.get('NODE_ENV') === 'development',
       }),
     }),
