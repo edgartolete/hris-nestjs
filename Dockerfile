@@ -4,7 +4,8 @@ COPY . /api
 
 WORKDIR /api
 
-RUN npm install
+RUN npm install \
+  && npm rebuild bcrypt --build-from-source
 
 EXPOSE 8000
 

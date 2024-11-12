@@ -8,11 +8,13 @@ import {
   Request,
   NotImplementedException,
   Res,
+  Body,
 } from '@nestjs/common';
 import { TokenAuthGuard } from './guards/token-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -39,7 +41,8 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Res() res: Response) {
+  async register(@Res() res: Response, @Body() createUserDto: CreateUserDto) {
+    return await this.authService.register(createUserDto);
     return res.status(HttpStatus.CREATED).json({ message: 'i made' });
     // throw new NotImplementedException();
   }

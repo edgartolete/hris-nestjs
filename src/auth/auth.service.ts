@@ -12,6 +12,8 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CreateSessionDto } from 'src/sessions/dto/create-session.dto';
 import { addDays } from 'date-fns';
 import { SessionsService } from 'src/sessions/sessions.service';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -79,6 +81,20 @@ export class AuthService {
       };
     } catch (err) {
       throw new InternalServerErrorException();
+    }
+  }
+
+  async register(createUser: CreateUserDto) {
+    const { password, ...rest } = createUser;
+
+    // const hashed = await bcrypt.hash(password, 10);
+
+    const newUser = { password, ...rest };
+
+    const { identifiers } = await this.userService.create(newUser);
+
+    if (!Array.isArray(identifiers) || identifiers.length === 0) {
+      throw new InternalServerErrorException('register failed');
     }
   }
 
