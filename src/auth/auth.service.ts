@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -35,14 +36,18 @@ export class AuthService {
   ) {}
 
   async validateUser(loginUser: LoginUserDto): Promise<SignInData | null> {
-    const user = await this.userService.findUserByname(loginUser.username);
+    const user = await this.userService.findUserByname(
+      loginUser.username.toLowerCase(),
+    );
 
-    if (user && user.password === loginUser.password) {
-      const { id, username } = user;
-      return { userId: id, username };
-    }
+    if (!user) return null;
 
-    return null;
+    const isVerified = bcrypt.compareSync(loginUser.password, user.password);
+
+    if (!isVerified) return null;
+
+    const { id, username } = user;
+    return { userId: id, username };
   }
 
   async signIn(
@@ -84,18 +89,58 @@ export class AuthService {
     }
   }
 
-  async register(createUser: CreateUserDto) {
-    const { password, ...rest } = createUser;
+  async register(
+    createUser: CreateUserDto,
+    ipAddress: string,
+    userAgent: string,
+  ) {
+    const { username, password, ...rest } = createUser;
 
-    // const hashed = await bcrypt.hash(password, 10);
+    const user = await this.userService.findUserByname(username.toLowerCase());
 
-    const newUser = { password, ...rest };
+    if (user) throw new ConflictException('User already exist!');
+
+    const hashed = bcrypt.hashSync(password, 10);
+
+    const newUser = {
+      ...rest,
+      username: username.toLowerCase(),
+      password: hashed,
+    };
 
     const { identifiers } = await this.userService.create(newUser);
 
     if (!Array.isArray(identifiers) || identifiers.length === 0) {
       throw new InternalServerErrorException('register failed');
     }
+
+    const payload = {
+      userId: identifiers[0].id,
+      username,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+    this.saveAccessToken(accessToken, identifiers[0].id);
+
+    const refreshToken = await this.generateRefreshToken(payload);
+
+    const { identifiers: tokenIdentifiers } = await this.saveRefreshToken({
+      userId: identifiers[0].id,
+      refreshToken,
+      ipAddress,
+      userAgent,
+      expiryDate: addDays(new Date(), 15),
+    });
+
+    if (!Array.isArray(tokenIdentifiers) || tokenIdentifiers.length === 0) {
+      throw new InternalServerErrorException('refreshToken inserting failed');
+    }
+
+    return {
+      accessToken,
+      refreshToken,
+      ...payload,
+    };
   }
 
   async saveAccessToken(token: string, userId: number) {

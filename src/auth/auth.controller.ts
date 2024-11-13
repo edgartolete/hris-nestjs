@@ -41,10 +41,25 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Res() res: Response, @Body() createUserDto: CreateUserDto) {
-    return await this.authService.register(createUserDto);
-    return res.status(HttpStatus.CREATED).json({ message: 'i made' });
-    // throw new NotImplementedException();
+  async register(
+    @Request() req: any,
+    @Res() res: Response,
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    const ipAddress = req.headers['x-forwarded-for'] || req.ip || '';
+    const userAgent = req.headers['user-agent'] || '';
+
+    const { refreshToken, ...rest } = await this.authService.register(
+      createUserDto,
+      ipAddress,
+      userAgent,
+    );
+
+    res.cookie('refreshToken', refreshToken);
+
+    return res
+      .status(HttpStatus.CREATED)
+      .json({ message: 'User Created.', content: rest });
   }
 
   @HttpCode(HttpStatus.OK)

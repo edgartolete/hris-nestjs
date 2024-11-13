@@ -1,6 +1,14 @@
 FROM node:20.14.0-bookworm
 
-COPY . /api
+RUN mkdir -p /api
+
+COPY package.json /api
+
+COPY /src/ /api/src
+
+COPY .eslintrc.js /api/eslintrc.js
+
+COPY tsconfig.json /api/tsconfig.json
 
 WORKDIR /api
 

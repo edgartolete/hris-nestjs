@@ -51,7 +51,8 @@ services:
     networks:
       - pse_analyzer_network
     volumes:
-      - ./:/api
+      - ./src:/api/src
+      - /api/node_modules/
     depends_on:
       - redis
       - db
