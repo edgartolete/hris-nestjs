@@ -16,9 +16,19 @@ export class SessionsService {
     return await this.sessionRepository
       .createQueryBuilder()
       .insert()
-      .into('session')
-      .values({ ...createSessionDto })
+      .into(Session)
+      .values([{ ...createSessionDto, user: { id: createSessionDto.userId } }])
       .execute();
+  }
+
+  async deactivate(refreshToken: string) {
+    return await this.sessionRepository.delete({ refreshToken });
+    // return await this.sessionRepository
+    //   .createQueryBuilder()
+    //   .update(Session)
+    //   .set({ isActive: false })
+    //   .where('refreshToken = :refreshToken', { refreshToken })
+    //   .execute();
   }
 
   findOne(id: number) {

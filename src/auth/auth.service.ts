@@ -15,6 +15,7 @@ import { addDays } from 'date-fns';
 import { SessionsService } from 'src/sessions/sessions.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { LogoutUserDto } from './dto/logout-user.dto';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -143,6 +144,20 @@ export class AuthService {
     };
   }
 
+  async logout(logoutUserDto: LogoutUserDto) {
+    try {
+      await this.cacheManager.del(logoutUserDto.accessToken);
+
+      const { affected } = await this.invalidateRefreshToken(
+        logoutUserDto.refreshToken,
+      );
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException('Logout failed.', err);
+    }
+  }
+
   async saveAccessToken(token: string, userId: number) {
     await this.cacheManager.set(token, userId, 1000 * 60 * 60); // 1hr TTL
   }
@@ -180,5 +195,9 @@ export class AuthService {
 
   async renewRefreshToken() {
     //TODO: use token rotation
+  }
+
+  async invalidateRefreshToken(refreshToken: string) {
+    return await this.sessionService.deactivate(refreshToken);
   }
 }

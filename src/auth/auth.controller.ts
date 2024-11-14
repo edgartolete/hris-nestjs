@@ -5,15 +5,16 @@ import {
   HttpStatus,
   Get,
   UseGuards,
-  Request,
   NotImplementedException,
   Res,
   Body,
+  Req,
+  HttpException,
 } from '@nestjs/common';
 import { TokenAuthGuard } from './guards/token-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Controller('auth')
@@ -25,7 +26,7 @@ export class AuthController {
   @Post('login')
   @Get('ip')
   @Get('info')
-  async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+  async login(@Req() req: any, @Res({ passthrough: true }) res: Response) {
     const ipAddress = req.headers['x-forwarded-for'] || req.ip || '';
     const userAgent = req.headers['user-agent'] || '';
 
@@ -42,7 +43,7 @@ export class AuthController {
 
   @Post('register')
   async register(
-    @Request() req: any,
+    @Req() req: any,
     @Res() res: Response,
     @Body() createUserDto: CreateUserDto,
   ) {
@@ -62,10 +63,28 @@ export class AuthController {
       .json({ message: 'User Created.', content: rest });
   }
 
+  @UseGuards(TokenAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout() {
-    throw new NotImplementedException();
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const accessToken = req?.headers?.authorization?.split(' ')[1];
+
+    const refreshToken = req.cookies['refreshToken'];
+
+    const success = await this.authService.logout({
+      accessToken,
+      refreshToken,
+    });
+
+    if (!success) {
+      throw new HttpException('No existing session.', HttpStatus.BAD_REQUEST);
+    }
+
+    res.clearCookie('refreshToken');
+
+    return res
+      .status(HttpStatus.OK)
+      .json({ message: 'Successfully logged-out.' });
   }
 
   @Post('verify')
@@ -80,7 +99,7 @@ export class AuthController {
 
   @UseGuards(TokenAuthGuard)
   @Get('me')
-  getSelfInfo(@Request() req: any) {
+  getSelfInfo(@Req() req: Request) {
     return req.user;
   }
 }

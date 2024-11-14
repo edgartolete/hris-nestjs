@@ -24,7 +24,7 @@ export class TokenAuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('No token from header');
     }
 
     const isStoredTokenExist = await this.cacheManager.get(token);
@@ -51,7 +51,7 @@ export class TokenAuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid Token');
       }
 
-      throw new UnauthorizedException((err as Error).message);
+      throw new UnauthorizedException('failed');
     }
 
     return true;
