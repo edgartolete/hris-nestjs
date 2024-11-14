@@ -149,17 +149,33 @@ export class AuthService {
 
   async generateRefreshToken(tokenPayload: SignInData): Promise<string> {
     // TODO: sliding expiry; the longer the user used the same device. extend the refresh token expiry from 15 days to 3 months
-    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
-    const refreshExpiry = this.configService.get<string>('JWT_REFRESH_EXPIRY');
+    try {
+      const refreshSecret =
+        this.configService.get<string>('JWT_REFRESH_SECRET');
+      const refreshExpiry =
+        this.configService.get<string>('JWT_REFRESH_EXPIRY');
 
-    return await this.jwtService.signAsync(tokenPayload, {
-      secret: refreshSecret,
-      expiresIn: refreshExpiry,
-    });
+      return await this.jwtService.signAsync(tokenPayload, {
+        secret: refreshSecret,
+        expiresIn: refreshExpiry,
+      });
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Generating refreshToken failed.',
+        err,
+      );
+    }
   }
 
   async saveRefreshToken(createSession: CreateSessionDto) {
-    return await this.sessionService.create(createSession);
+    try {
+      return await this.sessionService.create(createSession);
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Saving refresh token failed.',
+        err,
+      );
+    }
   }
 
   async renewRefreshToken() {

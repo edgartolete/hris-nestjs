@@ -1,8 +1,10 @@
+import { Session } from 'src/sessions/session.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -30,4 +32,7 @@ export class User {
 
   @DeleteDateColumn()
   deletedAt?: Date;
+
+  @OneToMany(() => Session, (session) => session.user)
+  session: Session[];
 }
