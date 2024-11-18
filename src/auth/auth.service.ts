@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UsersService } from 'src/users/user.service';
@@ -11,7 +13,7 @@ import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CreateSessionDto } from 'src/sessions/dto/create-session.dto';
-import { addDays } from 'date-fns';
+import { addDays, isBefore } from 'date-fns';
 import { SessionsService } from 'src/sessions/sessions.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -160,6 +162,27 @@ export class AuthService {
 
   async saveAccessToken(token: string, userId: number) {
     await this.cacheManager.set(token, userId, 1000 * 60 * 60); // 1hr TTL
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const result =
+        await this.sessionService.searchByRefreshToken(refreshToken);
+
+      if (Array.isArray(result) && !result.length) {
+        throw new NotFoundException('Refresh Token does not exist in system.');
+      }
+
+      const isExpired = isBefore(result[0].expiryDate, new Date());
+
+      if (isExpired) {
+        throw new BadRequestException('sessionToken expired.');
+      }
+
+      return { result };
+    } catch (err) {
+      throw new InternalServerErrorException('Refreshing token failed.', err);
+    }
   }
 
   async generateRefreshToken(tokenPayload: SignInData): Promise<string> {

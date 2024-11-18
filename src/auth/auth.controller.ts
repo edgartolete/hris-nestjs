@@ -16,6 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { RenewRefreshTokenDto } from './dto/refresh-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -87,9 +88,23 @@ export class AuthController {
       .json({ message: 'Successfully logged-out.' });
   }
 
-  @Post('verify')
-  async verifyRefreshToken() {
-    throw new NotImplementedException();
+  @Post('refresh')
+  async renewRefreshToken(
+    @Req() req: Request,
+    @Body() body: RenewRefreshTokenDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies['refreshToken'];
+
+    const token = body.refreshToken || refreshToken || '';
+
+    const newRefreshToken = await this.authService.refresh(token);
+
+    res.cookie('refreshToken: ', newRefreshToken);
+
+    return res
+      .status(HttpStatus.CREATED)
+      .json({ message: 'Successfully renew RefreshToken.' });
   }
 
   @Post('forgot')
