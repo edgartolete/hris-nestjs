@@ -42,8 +42,19 @@ export class SessionsService {
       .execute();
   }
 
-  update(id: number, updateSessionDto: UpdateSessionDto) {
-    return `This action updates a #${id} session ${updateSessionDto}`;
+  async update(updateSessionDto: UpdateSessionDto) {
+    const { id, userId, ...rest } = updateSessionDto;
+    return await this.dataSource
+      .createQueryBuilder()
+      .update(Session)
+      .set({
+        ...rest,
+        user: { id: userId },
+      })
+      .where('id = :id', { id })
+      .execute()
+      .then((res) => [res, null])
+      .catch((err) => [null, err]);
   }
 
   remove(id: number) {

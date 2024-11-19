@@ -10,6 +10,7 @@ import {
   Body,
   Req,
   HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { TokenAuthGuard } from './guards/token-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
@@ -17,6 +18,8 @@ import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { RenewRefreshTokenDto } from './dto/refresh-token.dto';
+import { getIpAddress } from 'src/utils/helpers';
+// import { getIpAddress } from 'src/utils/helpers';
 
 @Controller('auth')
 export class AuthController {
@@ -28,7 +31,8 @@ export class AuthController {
   @Get('ip')
   @Get('info')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response) {
-    const ipAddress = req.headers['x-forwarded-for'] || req.ip || '';
+    const ipAddress = '';
+    // const ipAddress = getIpAddress(req);
     const userAgent = req.headers['user-agent'] || '';
 
     const { refreshToken, ...rest } = await this.authService.signIn(
@@ -48,7 +52,8 @@ export class AuthController {
     @Res() res: Response,
     @Body() createUserDto: CreateUserDto,
   ) {
-    const ipAddress = req.headers['x-forwarded-for'] || req.ip || '';
+    const ipAddress = '';
+    // getIpAddress(req.headers['x-forwarded-for']) || req.ip || '';
     const userAgent = req.headers['user-agent'] || '';
 
     const { refreshToken, ...rest } = await this.authService.register(
@@ -91,20 +96,32 @@ export class AuthController {
   @Post('refresh')
   async renewRefreshToken(
     @Req() req: Request,
-    @Body() body: RenewRefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
+    @Body() body?: RenewRefreshTokenDto,
   ) {
-    const refreshToken = req.cookies['refreshToken'];
+    const ipAddress =
+      getIpAddress(req.headers['x-forwarded-for']) || req.ip || '';
+    const userAgent = req.headers['user-agent'] || '';
+    const currentRefreshToken = req.cookies['refreshToken'];
 
-    const token = body.refreshToken || refreshToken || '';
+    const token = body.refreshToken || currentRefreshToken || '';
 
-    const newRefreshToken = await this.authService.refresh(token);
+    if (!token) {
+      return res.json({ message: 'no token provided' });
+    }
 
-    res.cookie('refreshToken: ', newRefreshToken);
+    const { accessToken, refreshToken } =
+      await this.authService.renewRefreshToken(token, ipAddress, userAgent);
 
-    return res
-      .status(HttpStatus.CREATED)
-      .json({ message: 'Successfully renew RefreshToken.' });
+    res.cookie('refreshToken', refreshToken);
+
+    res.status(HttpStatus.CREATED);
+
+    return {
+      message: 'Successfully renew RefreshToken.',
+      accessToken,
+      refreshToken,
+    };
   }
 
   @Post('forgot')

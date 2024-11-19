@@ -18,6 +18,7 @@ import { SessionsService } from 'src/sessions/sessions.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LogoutUserDto } from './dto/logout-user.dto';
+import { UpdateSessionDto } from 'src/sessions/dto/update-session.dto';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -69,7 +70,7 @@ export class AuthService {
 
       const refreshToken = await this.generateRefreshToken(tokenPayload);
 
-      const { identifiers } = await this.saveRefreshToken({
+      const { identifiers } = await this.sessionService.create({
         refreshToken,
         userId: user.userId,
         ipAddress,
@@ -127,7 +128,7 @@ export class AuthService {
 
     const refreshToken = await this.generateRefreshToken(payload);
 
-    const { identifiers: tokenIdentifiers } = await this.saveRefreshToken({
+    const { identifiers: tokenIdentifiers } = await this.sessionService.create({
       userId: identifiers[0].id,
       refreshToken,
       ipAddress,
@@ -150,7 +151,7 @@ export class AuthService {
     try {
       await this.cacheManager.del(logoutUserDto.accessToken);
 
-      const { affected } = await this.invalidateRefreshToken(
+      const { affected } = await this.sessionService.deactivate(
         logoutUserDto.refreshToken,
       );
 
@@ -164,24 +165,68 @@ export class AuthService {
     await this.cacheManager.set(token, userId, 1000 * 60 * 60); // 1hr TTL
   }
 
-  async refresh(refreshToken: string) {
+  async renewRefreshToken(
+    oldRefreshToken: string,
+    ipAddress: string,
+    userAgent: string,
+  ) {
     try {
       const result =
-        await this.sessionService.searchByRefreshToken(refreshToken);
+        await this.sessionService.searchByRefreshToken(oldRefreshToken);
 
       if (Array.isArray(result) && !result.length) {
         throw new NotFoundException('Refresh Token does not exist in system.');
       }
 
-      const isExpired = isBefore(result[0].expiryDate, new Date());
+      const sessionResult = result[0];
+
+      const isExpired = isBefore(sessionResult.expiryDate, new Date());
 
       if (isExpired) {
         throw new BadRequestException('sessionToken expired.');
       }
 
-      return { result };
+      const refreshSecret =
+        this.configService.get<string>('JWT_REFRESH_SECRET');
+
+      const { userId, username } = await this.jwtService.verifyAsync(
+        sessionResult.refreshToken,
+        {
+          secret: refreshSecret,
+        },
+      );
+
+      const refreshToken = await this.generateRefreshToken({
+        userId,
+        username,
+      });
+
+      const tokenPayload: SignInData = {
+        userId,
+        username,
+      };
+
+      const accessToken = await this.jwtService.signAsync(tokenPayload);
+
+      const [res, err] = await this.sessionService.update({
+        id: sessionResult.id,
+        userId: sessionResult.userId,
+        refreshToken,
+        ipAddress,
+        userAgent,
+        expiryDate: addDays(new Date(), 15),
+      });
+
+      if (err) {
+        throw new InternalServerErrorException('update failed.', err.message);
+      }
+
+      return { accessToken, refreshToken };
     } catch (err) {
-      throw new InternalServerErrorException('Refreshing token failed.', err);
+      throw new InternalServerErrorException(
+        'Refreshing token failed.',
+        err.message,
+      );
     }
   }
 
@@ -203,24 +248,5 @@ export class AuthService {
         err,
       );
     }
-  }
-
-  async saveRefreshToken(createSession: CreateSessionDto) {
-    try {
-      return await this.sessionService.create(createSession);
-    } catch (err) {
-      throw new InternalServerErrorException(
-        'Saving refresh token failed.',
-        err,
-      );
-    }
-  }
-
-  async renewRefreshToken() {
-    //TODO: use token rotation
-  }
-
-  async invalidateRefreshToken(refreshToken: string) {
-    return await this.sessionService.deactivate(refreshToken);
   }
 }
