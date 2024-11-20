@@ -6,9 +6,11 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity()
+@Unique(['refreshToken'])
 export class Session {
   @PrimaryGeneratedColumn()
   id: number;

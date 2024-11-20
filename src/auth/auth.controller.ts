@@ -10,7 +10,6 @@ import {
   Body,
   Req,
   HttpException,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { TokenAuthGuard } from './guards/token-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,8 +17,7 @@ import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { RenewRefreshTokenDto } from './dto/refresh-token.dto';
-import { getIpAddress } from 'src/utils/helpers';
-// import { getIpAddress } from 'src/utils/helpers';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,19 +29,18 @@ export class AuthController {
   @Get('ip')
   @Get('info')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response) {
-    const ipAddress = '';
-    // const ipAddress = getIpAddress(req);
+    const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'] || '';
 
-    const { refreshToken, ...rest } = await this.authService.signIn(
+    const result = await this.authService.signIn(
       req.user,
       ipAddress,
       userAgent,
     );
 
-    res.cookie('refreshToken', refreshToken);
+    res.cookie('refreshToken', result.refreshToken);
 
-    return rest;
+    return { message: 'You are now logged in', content: result };
   }
 
   @Post('register')
@@ -52,21 +49,20 @@ export class AuthController {
     @Res() res: Response,
     @Body() createUserDto: CreateUserDto,
   ) {
-    const ipAddress = '';
-    // getIpAddress(req.headers['x-forwarded-for']) || req.ip || '';
+    const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'] || '';
 
-    const { refreshToken, ...rest } = await this.authService.register(
+    const result = await this.authService.register(
       createUserDto,
       ipAddress,
       userAgent,
     );
 
-    res.cookie('refreshToken', refreshToken);
+    res.cookie('refreshToken', result.refreshToken);
 
     return res
       .status(HttpStatus.CREATED)
-      .json({ message: 'User Created.', content: rest });
+      .json({ message: 'User Created.', content: result });
   }
 
   @UseGuards(TokenAuthGuard)
@@ -99,8 +95,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() body?: RenewRefreshTokenDto,
   ) {
-    const ipAddress =
-      getIpAddress(req.headers['x-forwarded-for']) || req.ip || '';
+    const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'] || '';
     const currentRefreshToken = req.cookies['refreshToken'];
 
@@ -119,9 +114,17 @@ export class AuthController {
 
     return {
       message: 'Successfully renew RefreshToken.',
-      accessToken,
-      refreshToken,
+      content: {
+        accessToken,
+        refreshToken,
+      },
     };
+  }
+
+  @UseGuards(TokenAuthGuard)
+  @Post('update-password')
+  async updatePassword(@Body() updatePassword: UpdatePasswordDto) {
+    const result = await this.authService.updatePassword(updatePassword);
   }
 
   @Post('forgot')

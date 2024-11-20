@@ -19,6 +19,7 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LogoutUserDto } from './dto/logout-user.dto';
 import { UpdateSessionDto } from 'src/sessions/dto/update-session.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -248,5 +249,9 @@ export class AuthService {
         err,
       );
     }
+  }
+
+  async updatePassword(updatePassword: UpdatePasswordDto) {
+    await this.userService.updatePassword(1, '');
   }
 }

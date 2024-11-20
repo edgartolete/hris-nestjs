@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { User } from './user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -9,6 +9,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private dataSource: DataSource,
   ) {}
 
   async create(createUser: CreateUserDto) {
@@ -39,6 +40,14 @@ export class UsersService {
     return `This action updates a #${id} user`;
   }
 
+  async updatePassword(id: number, password: string) {
+    return await this.dataSource
+      .createQueryBuilder()
+      .update(User)
+      .set({ password })
+      .where('id = :id', { id })
+      .execute();
+  }
   remove(id: number) {
     return `This action removes a #${id} user`;
   }
