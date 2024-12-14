@@ -20,7 +20,16 @@ export class UsersService {
     return `This action returns all users`;
   }
 
-  async findUserByname(username: string): Promise<User | null> {
+  async findOneById(id: number): Promise<User | null> {
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('user')
+      .from(User, 'user')
+      .where('user.id = :id', { id })
+      .getOne();
+  }
+
+  async findOneByName(username: string): Promise<User | null> {
     return await this.dataSource
       .createQueryBuilder()
       .select('user')

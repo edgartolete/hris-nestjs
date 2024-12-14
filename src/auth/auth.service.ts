@@ -41,7 +41,7 @@ export class AuthService {
   ) {}
 
   async validateUser(loginUser: LoginUserDto): Promise<SignInData | null> {
-    const user = await this.userService.findUserByname(
+    const user = await this.userService.findOneByName(
       loginUser.username.toLowerCase(),
     );
 
@@ -101,7 +101,7 @@ export class AuthService {
   ) {
     const { username, password, ...rest } = createUser;
 
-    const user = await this.userService.findUserByname(username.toLowerCase());
+    const user = await this.userService.findOneByName(username.toLowerCase());
 
     if (user) throw new ConflictException('User already exist!');
 
@@ -251,7 +251,36 @@ export class AuthService {
     }
   }
 
-  async updatePassword(updatePassword: UpdatePasswordDto) {
-    await this.userService.updatePassword(1, '');
+  async updatePassword(accessToken: string, updatePassword: UpdatePasswordDto) {
+    const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
+
+    const { userId = 0 } = await this.jwtService.verifyAsync(accessToken, {
+      secret: accessSecret,
+    });
+
+    const user = await this.userService.findOneById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User does not exist');
+    }
+
+    const isVerified = bcrypt.compareSync(
+      updatePassword.password,
+      user.password,
+    );
+
+    if (!isVerified) {
+      throw new BadRequestException('Password is incorrect');
+    }
+
+    const newPassword = bcrypt.hashSync(updatePassword.newPassword, 10);
+
+    const result = await this.userService.updatePassword(userId, newPassword);
+
+    if (!result?.affected) {
+      throw new BadRequestException('failed to update password');
+    }
+
+    return result;
   }
 }

@@ -121,10 +121,24 @@ export class AuthController {
     };
   }
 
+  @HttpCode(HttpStatus.OK)
   @UseGuards(TokenAuthGuard)
   @Post('update-password')
-  async updatePassword(@Body() updatePassword: UpdatePasswordDto) {
-    const result = await this.authService.updatePassword(updatePassword);
+  async updatePassword(
+    @Req() req: Request,
+    @Body() updatePassword: UpdatePasswordDto,
+  ) {
+    const accessToken = req?.headers?.authorization?.split(' ')[1];
+
+    const result = await this.authService.updatePassword(
+      accessToken,
+      updatePassword,
+    );
+
+    return {
+      message: 'Successfully update password:',
+      content: result,
+    };
   }
 
   @Post('forgot')
