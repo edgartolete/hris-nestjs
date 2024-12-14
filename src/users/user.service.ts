@@ -1,19 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { User } from './user.entity';
-import { DataSource, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private dataSource: DataSource,
-  ) {}
+  constructor(private dataSource: DataSource) {}
 
   async create(createUser: CreateUserDto) {
-    return await this.userRepository
+    return await this.dataSource
       .createQueryBuilder()
       .insert()
       .into('user')
@@ -22,18 +17,25 @@ export class UsersService {
   }
 
   findAll() {
-    return this.userRepository.find();
-    // return `This action returns all users`;
+    return `This action returns all users`;
   }
 
   async findUserByname(username: string): Promise<User | null> {
-    return await this.userRepository.findOneBy({
-      username: username.toLowerCase(),
-    });
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('user')
+      .from(User, 'user')
+      .where('user.username = :username', { username })
+      .getOne();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number) {
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('user')
+      .from(User, 'user')
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
   update(id: number) {
