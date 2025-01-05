@@ -8,10 +8,11 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { SessionsModule } from 'src/sessions/sessions.module';
+import { UtilsService } from 'src/utils/utils.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy],
+  providers: [AuthService, LocalStrategy, UtilsService],
   imports: [
     UsersModule,
     PassportModule,

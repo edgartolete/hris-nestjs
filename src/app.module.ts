@@ -10,6 +10,7 @@ import { SessionsModule } from './sessions/sessions.module';
 import { Session } from './sessions/session.entity';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { UtilsService } from './utils/utils.service';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { APP_GUARD } from '@nestjs/core';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    UtilsService,
   ],
 })
 export class AppModule {}

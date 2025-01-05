@@ -12,14 +12,13 @@ import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { CreateSessionDto } from 'src/sessions/dto/create-session.dto';
 import { addDays, isBefore } from 'date-fns';
 import { SessionsService } from 'src/sessions/sessions.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LogoutUserDto } from './dto/logout-user.dto';
-import { UpdateSessionDto } from 'src/sessions/dto/update-session.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { EmailTemplateEnum, UtilsService } from 'src/utils/utils.service';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -37,6 +36,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private sessionService: SessionsService,
+    private utilsService: UtilsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
@@ -209,7 +209,7 @@ export class AuthService {
 
       const accessToken = await this.jwtService.signAsync(tokenPayload);
 
-      const [res, err] = await this.sessionService.update({
+      const [, err] = await this.sessionService.update({
         id: sessionResult.id,
         userId: sessionResult.userId,
         refreshToken,
@@ -282,5 +282,61 @@ export class AuthService {
     }
 
     return result;
+  }
+
+  async verifyEmailRequest(email: string | undefined, userId: number) {
+    const storedCode = await this.cacheManager.get(`email-verify-${userId}`);
+
+    if (storedCode) {
+      throw new BadRequestException(
+        'Code was just recently sent to your email.',
+      );
+    }
+
+    let recipient = email;
+
+    const user = await this.userService.findOneById(userId);
+
+    if (user.isVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    if (!email) {
+      recipient = user.email;
+    }
+
+    const random6 = this.utilsService.generateRandom6DigitNumber();
+
+    const { data, error } = await this.utilsService.sendEmail(
+      [recipient],
+      EmailTemplateEnum.VERIFY_EMAIL,
+      random6,
+    );
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `Failed to send email: ${JSON.stringify(error)}`,
+      );
+    }
+
+    await this.cacheManager.set(
+      `email-verify-${userId}`,
+      random6,
+      1000 * 60 * 3,
+    ); // 3 minutes TTL
+
+    return data;
+  }
+
+  async verifyEmailSubmit(code: string, userId: number) {
+    const storedCode = await this.cacheManager.get(`email-verify-${userId}`);
+
+    if (code !== storedCode) {
+      throw new BadRequestException('Code is incorrect');
+    }
+
+    await this.cacheManager.del(`email-verify-${userId}`);
+
+    return await this.userService.updateVerifiedStatus(userId, true);
   }
 }

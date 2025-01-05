@@ -1,3 +1,4 @@
+import { IsEmail } from 'class-validator';
 import { Session } from 'src/sessions/session.entity';
 import {
   Entity,
@@ -20,6 +21,10 @@ export class User {
 
   @Column({ nullable: false, unique: true })
   username: string;
+
+  @Column({ nullable: false, unique: true })
+  @IsEmail()
+  email: string;
 
   @Column({ nullable: false })
   password: string;

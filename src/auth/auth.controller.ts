@@ -10,6 +10,7 @@ import {
   Body,
   Req,
   HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { TokenAuthGuard } from './guards/token-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,6 +19,11 @@ import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { RenewRefreshTokenDto } from './dto/refresh-token.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import {
+  EmailVerifyRequestDto,
+  EmailVerifySubmitDto,
+} from './dto/email-verify.dto';
+import { RequestWithTokenPayload } from 'src/types';
 
 @Controller('auth')
 export class AuthController {
@@ -40,7 +46,7 @@ export class AuthController {
 
     res.cookie('refreshToken', result.refreshToken);
 
-    return { message: 'You are now logged in', content: result };
+    return { message: 'You are now logged in', data: result };
   }
 
   @Post('register')
@@ -62,7 +68,7 @@ export class AuthController {
 
     return res
       .status(HttpStatus.CREATED)
-      .json({ message: 'User Created.', content: result });
+      .json({ message: 'User Created.', data: result });
   }
 
   @UseGuards(TokenAuthGuard)
@@ -114,7 +120,7 @@ export class AuthController {
 
     return {
       message: 'Successfully renew RefreshToken.',
-      content: {
+      data: {
         accessToken,
         refreshToken,
       },
@@ -135,9 +141,14 @@ export class AuthController {
       updatePassword,
     );
 
+    if (!result.affected) {
+      throw new InternalServerErrorException(
+        'Failed to update user status in the database.',
+      );
+    }
+
     return {
       message: 'Successfully update password:',
-      content: result,
     };
   }
 
@@ -148,7 +159,42 @@ export class AuthController {
 
   @UseGuards(TokenAuthGuard)
   @Get('me')
-  getSelfInfo(@Req() req: Request) {
+  getSelfInfo(@Req() req: RequestWithTokenPayload) {
     return req.user;
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(TokenAuthGuard)
+  @Post('email-verify/request')
+  async emailVerifySend(
+    @Req() req: RequestWithTokenPayload,
+    @Body() body?: EmailVerifyRequestDto,
+  ) {
+    const data = await this.authService.verifyEmailRequest(
+      body.email,
+      req.user.userId,
+    );
+    return { message: 'sent', data };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(TokenAuthGuard)
+  @Post('email-verify/submit')
+  async emailVerifyComplete(
+    @Req() req: RequestWithTokenPayload,
+    @Body() body: EmailVerifySubmitDto,
+  ) {
+    const data = await this.authService.verifyEmailSubmit(
+      body.code,
+      req.user.userId,
+    );
+
+    if (!data.affected) {
+      throw new InternalServerErrorException(
+        'Failed to update user status in the database.',
+      );
+    }
+
+    return { message: 'Successfully verified via email.' };
   }
 }
