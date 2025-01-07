@@ -8,7 +8,7 @@ export class LoggerService {
   constructor(private dataSource: DataSource) {}
 
   async add(errorLog: CreateErrorLogDto) {
-    const { userId, ...rest } = errorLog;
+    const { userId = null, ...rest } = errorLog;
 
     return await this.dataSource
       .createQueryBuilder()

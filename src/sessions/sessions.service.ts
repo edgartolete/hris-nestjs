@@ -76,15 +76,13 @@ export class SessionsService {
         .execute()
         .then((res) => [null, res]);
     } catch (err) {
-      const errorLog: ErrorLog = {
-        userId: updateStoredRTokenDto.userId || null,
+      await this.logger.add({
         context: 'updateStoredRefreshToken failed.',
+        error: err,
+        userId: updateStoredRTokenDto.userId,
         method: 'sessionService.updateStoredRefreshToken',
         input: updateStoredRTokenDto,
-        error: err,
-      };
-
-      await this.logger.add(errorLog);
+      });
 
       return [err?.message, null];
     }
