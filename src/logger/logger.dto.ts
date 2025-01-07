@@ -1,11 +1,12 @@
 import { IsJSON, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateErrorLogDto {
+export class CreateLogDto {
   @IsString()
   context: string;
 
+  @IsOptional()
   @IsJSON()
-  error: Record<string, any>;
+  error?: Record<string, any>;
 
   @IsOptional()
   @IsNumber()
