@@ -184,62 +184,54 @@ export class AuthService {
     ipAddress: string,
     userAgent: string,
   ) {
-    try {
-      const result = await this.sessionService.searchByRefreshTokenAndAgent(
-        oldRefreshToken,
-        userAgent,
-      );
+    const result = await this.sessionService.searchByRefreshTokenAndAgent(
+      oldRefreshToken,
+      userAgent,
+    );
 
-      if (!result) {
-        throw new NotFoundException('No active refresh token found.');
-      }
-
-      const isExpired = isBefore(result.expiryDate, new Date());
-
-      if (isExpired) {
-        throw new BadRequestException('sessionToken expired.');
-      }
-
-      const refreshSecret =
-        this.configService.get<string>('JWT_REFRESH_SECRET');
-
-      const { userId, username } = await this.jwtService.verifyAsync(
-        result.refreshToken,
-        {
-          secret: refreshSecret,
-        },
-      );
-
-      const refreshToken = await this.generateRefreshToken({
-        userId,
-        username,
-      });
-
-      const tokenPayload: SignInData = {
-        userId,
-        username,
-      };
-
-      const accessToken = await this.jwtService.signAsync(tokenPayload);
-
-      const [err] = await this.sessionService.update({
-        id: result.id,
-        refreshToken,
-        ipAddress,
-        expiryDate: addDays(new Date(), 15),
-      });
-
-      if (err) {
-        throw new InternalServerErrorException('update failed.', err.message);
-      }
-
-      return { accessToken, refreshToken };
-    } catch (err) {
-      throw new InternalServerErrorException(
-        'Refreshing token failed.',
-        err.message,
-      );
+    if (!result) {
+      throw new BadRequestException('No active refresh token found.');
     }
+
+    const isExpired = isBefore(result.expiryDate, new Date());
+
+    if (isExpired) {
+      throw new BadRequestException('sessionToken expired.');
+    }
+
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+
+    const { userId, username } = await this.jwtService.verifyAsync(
+      result.refreshToken,
+      {
+        secret: refreshSecret,
+      },
+    );
+
+    const refreshToken = await this.generateRefreshToken({
+      userId,
+      username,
+    });
+
+    const tokenPayload: SignInData = {
+      userId,
+      username,
+    };
+
+    const accessToken = await this.jwtService.signAsync(tokenPayload);
+
+    const [err] = await this.sessionService.update({
+      id: result.id,
+      refreshToken,
+      ipAddress,
+      expiryDate: addDays(new Date(), 15),
+    });
+
+    if (err) {
+      throw new InternalServerErrorException('update failed.', err.message);
+    }
+
+    return { accessToken, refreshToken };
   }
 
   async generateRefreshToken(tokenPayload: SignInData): Promise<string> {
