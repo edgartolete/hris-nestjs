@@ -99,17 +99,10 @@ export class AuthService {
       return sessionData;
     }
 
-    const { identifiers } = await this.sessionService.create(updateData);
+    const [error] = await this.sessionService.create(updateData);
 
-    if (!Array.isArray(identifiers) || identifiers.length === 0) {
-      const errorLog: ErrorLog = {
-        context: 'RefreshToken inserting failed',
-        method: 'sessionService.create',
-        input: updateData,
-        error: null,
-      };
-
-      throw new InternalServerErrorException(JSON.stringify(errorLog));
+    if (error) {
+      throw new InternalServerErrorException(error);
     }
 
     return sessionData;
@@ -150,7 +143,7 @@ export class AuthService {
 
     const refreshToken = await this.generateRefreshToken(payload);
 
-    const { identifiers: tokenIdentifiers } = await this.sessionService.create({
+    const [err] = await this.sessionService.create({
       userId: identifiers[0].id,
       refreshToken,
       ipAddress,
@@ -158,7 +151,7 @@ export class AuthService {
       expiryDate: addDays(new Date(), 15),
     });
 
-    if (!Array.isArray(tokenIdentifiers) || tokenIdentifiers.length === 0) {
+    if (err) {
       throw new InternalServerErrorException('refreshToken inserting failed');
     }
 

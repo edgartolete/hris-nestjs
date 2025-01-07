@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
-import { DataSource, UpdateResult } from 'typeorm';
+import { DataSource, InsertResult, UpdateResult } from 'typeorm';
 import { Session } from './session.entity';
 import { FindSessionDto } from './dto/find-session.dto';
-import { ErrorLog } from 'src/types';
 import { LoggerService } from 'src/logger/logger.service';
 
 @Injectable()
@@ -14,13 +13,37 @@ export class SessionsService {
     private logger: LoggerService,
   ) {}
 
-  async create(createSessionDto: CreateSessionDto) {
-    return await this.dataSource
-      .createQueryBuilder()
-      .insert()
-      .into(Session)
-      .values([{ ...createSessionDto, user: { id: createSessionDto.userId } }])
-      .execute();
+  async create(
+    createSessionDto: CreateSessionDto,
+  ): Promise<[string | null, InsertResult]> {
+    try {
+      const res = await this.dataSource
+        .createQueryBuilder()
+        .insert()
+        .into(Session)
+        .values([
+          { ...createSessionDto, user: { id: createSessionDto.userId } },
+        ])
+        .execute();
+
+      if (!Array.isArray(res.identifiers) || res.identifiers.length === 0) {
+        throw new Error('Inserting failed');
+      }
+
+      return [null, res];
+    } catch (err) {
+      const errorLog = {
+        context: 'updateStoredRefreshToken failed.',
+        error: err,
+        userId: createSessionDto.userId,
+        method: 'sessionService.create',
+        input: createSessionDto,
+      };
+
+      await this.logger.add(errorLog);
+
+      return [errorLog.context, null];
+    }
   }
 
   async deactivate(refreshToken: string) {
@@ -56,7 +79,9 @@ export class SessionsService {
       .catch((err) => [err, null]);
   }
 
-  async updateStoredRefreshToken(updateStoredRTokenDto: CreateSessionDto) {
+  async updateStoredRefreshToken(
+    updateStoredRTokenDto: CreateSessionDto,
+  ): Promise<[string | null, UpdateResult]> {
     try {
       const {
         userId = 0,
@@ -76,15 +101,17 @@ export class SessionsService {
         .execute()
         .then((res) => [null, res]);
     } catch (err) {
-      await this.logger.add({
+      const errorLog = {
         context: 'updateStoredRefreshToken failed.',
         error: err,
         userId: updateStoredRTokenDto.userId,
         method: 'sessionService.updateStoredRefreshToken',
         input: updateStoredRTokenDto,
-      });
+      };
 
-      return [err?.message, null];
+      await this.logger.add(errorLog);
+
+      return [errorLog.context, null];
     }
   }
 
