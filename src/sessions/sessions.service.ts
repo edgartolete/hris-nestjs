@@ -93,21 +93,16 @@ export class SessionsService {
     updateStoredRTokenDto: CreateSessionDto,
   ): Promise<[string | null, UpdateResult]> {
     try {
-      const {
-        userId = 0,
-        ipAddress,
-        userAgent,
-        ...rest
-      } = updateStoredRTokenDto;
+      const { userId = 0, userAgent, ...rest } = updateStoredRTokenDto;
 
       return await this.dataSource
         .createQueryBuilder()
         .update(Session)
         .set({ ...rest, isActive: true })
-        .where(
-          'user.id = :userId AND ipAddress = :ipAddress AND userAgent = :userAgent',
-          { userId, ipAddress, userAgent },
-        )
+        .where('user.id = :userId AND userAgent = :userAgent', {
+          userId,
+          userAgent,
+        })
         .execute()
         .then((res) => [null, res]);
     } catch (err) {
