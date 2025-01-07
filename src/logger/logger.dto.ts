@@ -1,4 +1,10 @@
-import { IsJSON, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsJSON,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateLogDto {
   @IsString()
@@ -19,4 +25,8 @@ export class CreateLogDto {
   @IsOptional()
   @IsJSON()
   input?: Record<string, any>;
+
+  @IsOptional()
+  @IsBoolean()
+  isResolved?: boolean;
 }

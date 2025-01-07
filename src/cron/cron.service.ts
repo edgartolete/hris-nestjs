@@ -29,6 +29,7 @@ export class CronService {
       this.log.add({
         context: 'Cron: Monthly Session Cleanup',
         input: { affected: res.affected },
+        isResolved: true,
       });
     } catch (err) {
       this.log.add({
