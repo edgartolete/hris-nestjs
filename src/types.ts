@@ -10,3 +10,11 @@ export type TokenPayload = {
 export interface RequestWithTokenPayload extends Request {
   user: TokenPayload;
 }
+
+export type ErrorLog = {
+  userId?: number;
+  context: string;
+  method?: string;
+  input?: Record<string, any>;
+  error: Record<string, any>;
+} | null;

@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, UpdateResult } from 'typeorm';
 import { Session } from './session.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindSessionDto } from './dto/find-session.dto';
+import { ErrorLog } from 'src/types';
+import { LoggerService } from 'src/logger/logger.service';
 
 @Injectable()
 export class SessionsService {
   constructor(
-    @InjectRepository(Session)
-    private sessionRepository: Repository<Session>,
     private dataSource: DataSource,
+    private logger: LoggerService,
   ) {}
 
   async create(createSessionDto: CreateSessionDto) {
-    return await this.sessionRepository
+    return await this.dataSource
       .createQueryBuilder()
       .insert()
       .into(Session)
@@ -24,13 +24,12 @@ export class SessionsService {
   }
 
   async deactivate(refreshToken: string) {
-    return await this.sessionRepository.delete({ refreshToken });
-    // return await this.sessionRepository
-    //   .createQueryBuilder()
-    //   .update(Session)
-    //   .set({ isActive: false })
-    //   .where('refreshToken = :refreshToken', { refreshToken })
-    //   .execute();
+    return await this.dataSource
+      .createQueryBuilder()
+      .delete()
+      .from(Session)
+      .where('refreshToken = :refreshToken', { refreshToken })
+      .execute();
   }
 
   async searchByRefreshToken(refreshToken: string): Promise<FindSessionDto[]> {
@@ -53,8 +52,42 @@ export class SessionsService {
       })
       .where('id = :id', { id })
       .execute()
-      .then((res) => [res, null])
-      .catch((err) => [null, err]);
+      .then((res) => [null, res])
+      .catch((err) => [err, null]);
+  }
+
+  async updateStoredRefreshToken(updateStoredRTokenDto: CreateSessionDto) {
+    try {
+      const {
+        userId = 0,
+        ipAddress,
+        userAgent,
+        ...rest
+      } = updateStoredRTokenDto;
+
+      return await this.dataSource
+        .createQueryBuilder()
+        .update(Session)
+        .set({ ...rest })
+        .where(
+          'user.id = :userId AND x ipAddress = :ipAddress AND userAgent = :userAgent',
+          { userId, ipAddress, userAgent },
+        )
+        .execute()
+        .then((res) => [null, res]);
+    } catch (err) {
+      const errorLog: ErrorLog = {
+        userId: updateStoredRTokenDto?.userId ?? null,
+        context: 'updateStoredRefreshToken failed.',
+        method: 'sessionService.updateStoredRefreshToken',
+        input: updateStoredRTokenDto,
+        error: err,
+      };
+
+      await this.logger.add(errorLog);
+
+      return [err, null];
+    }
   }
 
   remove(id: number) {

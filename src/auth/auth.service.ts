@@ -19,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { LogoutUserDto } from './dto/logout-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EmailTemplateEnum, UtilsService } from 'src/utils/utils.service';
+import { ErrorLog } from 'src/types';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -65,33 +66,53 @@ export class AuthService {
       username: user.username,
     };
 
-    try {
-      const accessToken = await this.jwtService.signAsync(tokenPayload);
-      this.saveAccessToken(accessToken, user.userId);
+    const accessToken = await this.jwtService.signAsync(tokenPayload);
+    this.saveAccessToken(accessToken, user.userId);
 
-      const refreshToken = await this.generateRefreshToken(tokenPayload);
+    const refreshToken = await this.generateRefreshToken(tokenPayload);
 
-      const { identifiers } = await this.sessionService.create({
-        refreshToken,
-        userId: user.userId,
-        ipAddress,
-        userAgent,
-        expiryDate: addDays(new Date(), 15),
-      });
+    const refreshTokenExpiry = addDays(new Date(), 15);
 
-      if (!Array.isArray(identifiers) || identifiers.length === 0) {
-        throw new InternalServerErrorException('refreshToken inserting failed');
-      }
+    const sessionData = {
+      accessToken,
+      refreshToken,
+      username: user.username,
+      userId: user.userId,
+    };
 
-      return {
-        accessToken,
-        refreshToken,
-        username: user.username,
-        userId: user.userId,
-      };
-    } catch (err) {
-      throw new InternalServerErrorException();
+    const updateData = {
+      refreshToken,
+      userId: user.userId,
+      ipAddress,
+      userAgent,
+      expiryDate: refreshTokenExpiry,
+    };
+
+    const [err, res] =
+      await this.sessionService.updateStoredRefreshToken(updateData);
+
+    if (err) {
+      throw new InternalServerErrorException(JSON.stringify(err));
     }
+
+    if (res.affected > 0) {
+      return sessionData;
+    }
+
+    const { identifiers } = await this.sessionService.create(updateData);
+
+    if (!Array.isArray(identifiers) || identifiers.length === 0) {
+      const errorLog: ErrorLog = {
+        context: 'RefreshToken inserting failed',
+        method: 'sessionService.create',
+        input: updateData,
+        error: null,
+      };
+
+      throw new InternalServerErrorException(JSON.stringify(errorLog));
+    }
+
+    return sessionData;
   }
 
   async register(
@@ -125,7 +146,7 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync(payload);
-    this.saveAccessToken(accessToken, identifiers[0].id);
+    await this.saveAccessToken(accessToken, identifiers[0].id);
 
     const refreshToken = await this.generateRefreshToken(payload);
 
@@ -209,7 +230,7 @@ export class AuthService {
 
       const accessToken = await this.jwtService.signAsync(tokenPayload);
 
-      const [, err] = await this.sessionService.update({
+      const [err] = await this.sessionService.update({
         id: sessionResult.id,
         userId: sessionResult.userId,
         refreshToken,

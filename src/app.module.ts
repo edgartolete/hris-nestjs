@@ -11,15 +11,19 @@ import { Session } from './sessions/session.entity';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { UtilsService } from './utils/utils.service';
+import { LoggerService } from './logger/logger.service';
+import { Logger } from './logger/logger.entity';
 
 @Module({
   imports: [
     UsersModule,
     AuthModule,
+    SessionsModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
+      // importing it on top level will make it available to all modules/services
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -29,7 +33,7 @@ import { UtilsService } from './utils/utils.service';
         username: configService.get('DB_USER'),
         password: configService.get('MYSQL_ROOT_PASSWORD'),
         database: configService.get('MYSQL_DATABASE'),
-        entities: [User, Session],
+        entities: [User, Session, Logger],
         synchronize: configService.get('NODE_ENV') === 'development',
       }),
     }),
@@ -39,16 +43,16 @@ import { UtilsService } from './utils/utils.service';
         limit: 10,
       },
     ]),
-    SessionsModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    LoggerService,
+    UtilsService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    UtilsService,
   ],
 })
 export class AppModule {}

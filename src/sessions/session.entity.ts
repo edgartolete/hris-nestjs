@@ -33,7 +33,4 @@ export class Session {
 
   @CreateDateColumn()
   createdAt: Date;
-
-  @Column({ default: true })
-  isActive: boolean;
 }

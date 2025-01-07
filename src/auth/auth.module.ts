@@ -9,10 +9,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { SessionsModule } from 'src/sessions/sessions.module';
 import { UtilsService } from 'src/utils/utils.service';
+import { LoggerService } from 'src/logger/logger.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, UtilsService],
+  providers: [AuthService, LocalStrategy, UtilsService, LoggerService],
   imports: [
     UsersModule,
     PassportModule,
