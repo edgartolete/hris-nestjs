@@ -70,14 +70,14 @@ export class SessionsService {
         .update(Session)
         .set({ ...rest })
         .where(
-          'user.id = :userId AND x ipAddress = :ipAddress AND userAgent = :userAgent',
+          'user.id = :userId AND ipAddress = :ipAddress AND userAgent = :userAgent',
           { userId, ipAddress, userAgent },
         )
         .execute()
         .then((res) => [null, res]);
     } catch (err) {
       const errorLog: ErrorLog = {
-        userId: updateStoredRTokenDto?.userId ?? null,
+        userId: updateStoredRTokenDto.userId || null,
         context: 'updateStoredRefreshToken failed.',
         method: 'sessionService.updateStoredRefreshToken',
         input: updateStoredRTokenDto,
@@ -86,7 +86,7 @@ export class SessionsService {
 
       await this.logger.add(errorLog);
 
-      return [err, null];
+      return [err?.message, null];
     }
   }
 

@@ -92,7 +92,7 @@ export class AuthService {
       await this.sessionService.updateStoredRefreshToken(updateData);
 
     if (err) {
-      throw new InternalServerErrorException(JSON.stringify(err));
+      throw new InternalServerErrorException(err);
     }
 
     if (res.affected > 0) {
