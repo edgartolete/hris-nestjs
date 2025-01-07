@@ -13,6 +13,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { UtilsService } from './utils/utils.service';
 import { LoggerService } from './logger/logger.service';
 import { Logger } from './logger/logger.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronService } from './cron/cron.service';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { Logger } from './logger/logger.entity';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       // importing it on top level will make it available to all modules/services
       imports: [ConfigModule],
@@ -53,6 +56,7 @@ import { Logger } from './logger/logger.entity';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    CronService,
   ],
 })
 export class AppModule {}

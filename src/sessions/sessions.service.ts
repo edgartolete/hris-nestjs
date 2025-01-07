@@ -3,7 +3,6 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { DataSource, InsertResult, UpdateResult } from 'typeorm';
 import { Session } from './session.entity';
-import { FindSessionDto } from './dto/find-session.dto';
 import { LoggerService } from 'src/logger/logger.service';
 import { config } from 'src/config';
 
@@ -65,24 +64,28 @@ export class SessionsService {
       .execute();
   }
 
-  async searchByRefreshToken(refreshToken: string): Promise<FindSessionDto[]> {
+  async searchByRefreshTokenAndAgent(refreshToken: string, userAgent: string) {
     return await this.dataSource
       .createQueryBuilder()
       .select()
       .from(Session, 'session')
-      .where('refreshToken = :refreshToken', { refreshToken })
-      .execute();
+      .where(
+        'refreshToken = :refreshToken AND userAgent = :userAgent AND isActive = :isActive',
+        {
+          refreshToken,
+          userAgent,
+          isActive: true,
+        },
+      )
+      .getOne();
   }
 
   async update(updateSessionDto: UpdateSessionDto) {
-    const { id, userId, ...rest } = updateSessionDto;
+    const { id, ...rest } = updateSessionDto;
     return await this.dataSource
       .createQueryBuilder()
       .update(Session)
-      .set({
-        ...rest,
-        user: { id: userId },
-      })
+      .set(rest)
       .where('id = :id', { id })
       .execute()
       .then((res) => [null, res])

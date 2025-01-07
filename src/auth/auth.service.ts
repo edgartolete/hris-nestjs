@@ -185,16 +185,16 @@ export class AuthService {
     userAgent: string,
   ) {
     try {
-      const result =
-        await this.sessionService.searchByRefreshToken(oldRefreshToken);
+      const result = await this.sessionService.searchByRefreshTokenAndAgent(
+        oldRefreshToken,
+        userAgent,
+      );
 
-      if (Array.isArray(result) && !result.length) {
-        throw new NotFoundException('Refresh Token does not exist in system.');
+      if (!result) {
+        throw new NotFoundException('No active refresh token found.');
       }
 
-      const sessionResult = result[0];
-
-      const isExpired = isBefore(sessionResult.expiryDate, new Date());
+      const isExpired = isBefore(result.expiryDate, new Date());
 
       if (isExpired) {
         throw new BadRequestException('sessionToken expired.');
@@ -204,7 +204,7 @@ export class AuthService {
         this.configService.get<string>('JWT_REFRESH_SECRET');
 
       const { userId, username } = await this.jwtService.verifyAsync(
-        sessionResult.refreshToken,
+        result.refreshToken,
         {
           secret: refreshSecret,
         },
@@ -223,11 +223,9 @@ export class AuthService {
       const accessToken = await this.jwtService.signAsync(tokenPayload);
 
       const [err] = await this.sessionService.update({
-        id: sessionResult.id,
-        userId: sessionResult.userId,
+        id: result.id,
         refreshToken,
         ipAddress,
-        userAgent,
         expiryDate: addDays(new Date(), 15),
       });
 

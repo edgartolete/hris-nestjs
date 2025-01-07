@@ -17,4 +17,8 @@ export class LoggerService {
       .values({ ...rest, user: { id: userId } })
       .execute();
   }
+
+  print() {
+    console.log('# hello world!');
+  }
 }
