@@ -38,6 +38,15 @@ export class UsersService {
       .getOne();
   }
 
+  async findOneByEmail(email: string): Promise<User | null> {
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('user')
+      .from(User, 'user')
+      .where('user.email = :email', { email })
+      .getOne();
+  }
+
   async findOne(id: number) {
     return await this.dataSource
       .createQueryBuilder()

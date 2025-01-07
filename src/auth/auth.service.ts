@@ -19,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { LogoutUserDto } from './dto/logout-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EmailTemplateEnum, UtilsService } from 'src/utils/utils.service';
+import { ForgotPasswordRequestDto } from './dto/forgot-password.dto';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -334,12 +335,133 @@ export class AuthService {
   async verifyEmailSubmit(code: string, userId: number) {
     const storedCode = await this.cacheManager.get(`email-verify-${userId}`);
 
+    if (!storedCode) {
+      throw new BadRequestException('Email is incorrect, or Code expired');
+    }
+
     if (code !== storedCode) {
       throw new BadRequestException('Code is incorrect');
     }
 
-    await this.cacheManager.del(`email-verify-${userId}`);
+    this.cacheManager.del(`email-verify-${userId}`);
 
     return await this.userService.updateVerifiedStatus(userId, true);
+  }
+
+  async forgotEmailRequest(b: ForgotPasswordRequestDto) {
+    const storedCode = await this.cacheManager.get(
+      `forgot-password-${b.email}`,
+    );
+
+    if (storedCode) {
+      throw new BadRequestException(
+        'Code was just recently sent to your email.',
+      );
+    }
+
+    const user = await this.userService.findOneByEmail(b.email);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const random6 = this.utilsService.generateRandom6DigitNumber();
+
+    this.cacheManager.set(`forgot-password-${b.email}`, random6, 1000 * 60 * 3);
+
+    const { data, error } = await this.utilsService.sendEmail(
+      b.email,
+      EmailTemplateEnum.FORGOT_EMAIL,
+      random6,
+    );
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `Failed to send email: ${JSON.stringify(error)}`,
+      );
+    }
+
+    return data;
+  }
+
+  async forgotPasswordSubmit(
+    email: string,
+    code: string,
+    password: string,
+    ipAddress: string,
+    userAgent: string,
+  ) {
+    const storedCode = await this.cacheManager.get(`forgot-password-${email}`);
+
+    if (!storedCode) {
+      throw new BadRequestException('Email is incorrect, or Code expired');
+    }
+
+    if (code !== storedCode) {
+      throw new BadRequestException('Code is incorrect');
+    }
+
+    const user = await this.userService.findOneByEmail(email);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const newPassword = bcrypt.hashSync(password, 10);
+
+    const result = await this.userService.updatePassword(user.id, newPassword);
+
+    if (!result?.affected) {
+      throw new BadRequestException('failed to update password');
+    }
+
+    const tokenPayload: SignInData = {
+      userId: user.id,
+      username: user.username,
+    };
+
+    const accessToken = await this.jwtService.signAsync(tokenPayload);
+
+    this.saveAccessToken(accessToken, user.id);
+
+    const refreshToken = await this.generateRefreshToken(tokenPayload);
+
+    const sessionData = {
+      accessToken,
+      refreshToken,
+      username: user.username,
+      userId: user.id,
+    };
+
+    const refreshTokenExpiry = addDays(new Date(), 15);
+
+    const updateData = {
+      refreshToken,
+      userId: user.id,
+      ipAddress,
+      userAgent,
+      expiryDate: refreshTokenExpiry,
+    };
+
+    this.cacheManager.del(`forgot-password-${email}`);
+
+    const [err, res] =
+      await this.sessionService.updateStoredRefreshToken(updateData);
+
+    if (err) {
+      throw new InternalServerErrorException(err);
+    }
+
+    if (res.affected > 0) {
+      return sessionData;
+    }
+
+    const [error] = await this.sessionService.create(updateData);
+
+    if (error) {
+      throw new InternalServerErrorException(error);
+    }
+
+    return sessionData;
   }
 }

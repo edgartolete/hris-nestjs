@@ -24,6 +24,10 @@ import {
   EmailVerifySubmitDto,
 } from './dto/email-verify.dto';
 import { RequestWithTokenPayload } from 'src/types';
+import {
+  ForgotPasswordRequestDto,
+  ForgotPasswordSubmitDto,
+} from './dto/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -38,15 +42,11 @@ export class AuthController {
     const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'] || '';
 
-    const result = await this.authService.signIn(
-      req.user,
-      ipAddress,
-      userAgent,
-    );
+    const data = await this.authService.signIn(req.user, ipAddress, userAgent);
 
-    res.cookie('refreshToken', result.refreshToken);
+    res.cookie('refreshToken', data.refreshToken);
 
-    return { message: 'You are now logged in', data: result };
+    return { message: 'You are now logged in', data };
   }
 
   @Post('register')
@@ -152,15 +152,48 @@ export class AuthController {
     };
   }
 
-  @Post('forgot')
-  async forgotPassword() {
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Post('forgot/email/request')
+  async forgotPasswordEmailRequest(@Body() b: ForgotPasswordRequestDto) {
+    const data = await this.authService.forgotEmailRequest(b);
+
+    return {
+      message: 'Email Sent',
+      data,
+    };
+  }
+
+  @Post('forgot/email/submit')
+  async forgotPasswordEmailSubmit(
+    @Req() req: any,
+    @Body() b: ForgotPasswordSubmitDto,
+  ) {
+    const { email, code, password } = b;
+    const ipAddress = req.ip;
+    const userAgent = req.headers['user-agent'] || '';
+
+    const data = await this.authService.forgotPasswordSubmit(
+      email,
+      code,
+      password,
+      ipAddress,
+      userAgent,
+    );
+
+    return {
+      message: 'Success Updating Password. You are now Logged-in',
+      data,
+    };
+  }
+
+  @Post('forgot/phone')
+  async forgotPasswordPhone() {
     throw new NotImplementedException();
   }
 
-  @UseGuards(TokenAuthGuard)
-  @Get('me')
-  getSelfInfo(@Req() req: RequestWithTokenPayload) {
-    return req.user;
+  @Post('forgot/phone')
+  async forgotPasswordPhoneValidate() {
+    throw new NotImplementedException();
   }
 
   @HttpCode(HttpStatus.OK)
@@ -174,7 +207,7 @@ export class AuthController {
       body.email,
       req.user.userId,
     );
-    return { message: 'sent', data };
+    return { message: 'Email Sent.', data };
   }
 
   @HttpCode(HttpStatus.OK)
