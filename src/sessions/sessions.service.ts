@@ -5,6 +5,7 @@ import { DataSource, InsertResult, UpdateResult } from 'typeorm';
 import { Session } from './session.entity';
 import { FindSessionDto } from './dto/find-session.dto';
 import { LoggerService } from 'src/logger/logger.service';
+import { config } from 'src/config';
 
 @Injectable()
 export class SessionsService {
@@ -47,6 +48,15 @@ export class SessionsService {
   }
 
   async deactivate(refreshToken: string) {
+    if (config.session.softDelete) {
+      return await this.dataSource
+        .createQueryBuilder()
+        .update(Session)
+        .set({ isActive: false })
+        .where('refreshToken = :refreshToken', { refreshToken })
+        .execute();
+    }
+
     return await this.dataSource
       .createQueryBuilder()
       .delete()
@@ -93,7 +103,7 @@ export class SessionsService {
       return await this.dataSource
         .createQueryBuilder()
         .update(Session)
-        .set({ ...rest })
+        .set({ ...rest, isActive: true })
         .where(
           'user.id = :userId AND ipAddress = :ipAddress AND userAgent = :userAgent',
           { userId, ipAddress, userAgent },

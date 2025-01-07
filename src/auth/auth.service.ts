@@ -19,7 +19,6 @@ import * as bcrypt from 'bcrypt';
 import { LogoutUserDto } from './dto/logout-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EmailTemplateEnum, UtilsService } from 'src/utils/utils.service';
-import { ErrorLog } from 'src/types';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
