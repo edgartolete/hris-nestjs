@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
-import { UsersService } from 'src/users/user.service';
+import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/user.module';
+import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,6 +15,7 @@ import { LoggerService } from './logger/logger.service';
 import { Logger } from './logger/logger.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronService } from './cron/cron.service';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { CronService } from './cron/cron.service';
         limit: 10,
       },
     ]),
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [

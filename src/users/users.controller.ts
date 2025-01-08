@@ -9,11 +9,11 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { UsersService } from './user.service';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { TokenAuthGuard } from 'src/auth/guards/token-auth.guard';
 import { RequestWithTokenPayload } from 'src/types';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
