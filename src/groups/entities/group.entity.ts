@@ -1,3 +1,4 @@
+import { Membership } from 'src/memberships/entities/membership.entity';
 import {
   Entity,
   Column,
@@ -6,7 +7,6 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Membership } from './membership.entity';
 
 @Entity('groups')
 export class Group {

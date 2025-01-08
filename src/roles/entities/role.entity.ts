@@ -1,6 +1,6 @@
-import { Membership } from 'src/groups/entities/membership.entity';
+import { Membership } from 'src/memberships/entities/membership.entity';
 import { Permission } from 'src/permissions/entities/permission.entity';
-import { User } from 'src/users/user.entity';
+import { User } from 'src/users/entities/user.entity';
 import {
   Entity,
   Column,

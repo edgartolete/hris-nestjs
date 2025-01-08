@@ -1,4 +1,4 @@
-import { User } from 'src/users/user.entity';
+import { User } from 'src/users/entities/user.entity';
 import {
   Entity,
   Column,
@@ -8,8 +8,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Group } from './group.entity';
 import { Role } from 'src/roles/entities/role.entity';
+import { Group } from 'src/groups/entities/group.entity';
 
 @Entity('memberships')
 export class Membership {

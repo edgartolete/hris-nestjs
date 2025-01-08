@@ -1,5 +1,5 @@
 import { IsEmail } from 'class-validator';
-import { Membership } from 'src/groups/entities/membership.entity';
+import { Membership } from 'src/memberships/entities/membership.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Session } from 'src/sessions/session.entity';
 import {

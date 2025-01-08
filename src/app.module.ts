@@ -5,7 +5,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './users/user.entity';
+import { User } from './users/entities/user.entity';
 import { SessionsModule } from './sessions/sessions.module';
 import { Session } from './sessions/session.entity';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -21,13 +21,11 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { Role } from './roles/entities/role.entity';
 import { Permission } from './permissions/entities/permission.entity';
 import { Group } from './groups/entities/group.entity';
-import { Membership } from './groups/entities/membership.entity';
+import { Membership } from './memberships/entities/membership.entity';
+import { MembershipsModule } from './memberships/memberships.module';
 
 @Module({
   imports: [
-    UsersModule,
-    AuthModule,
-    SessionsModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -53,9 +51,13 @@ import { Membership } from './groups/entities/membership.entity';
         limit: 10,
       },
     ]),
+    AuthModule,
+    UsersModule,
+    SessionsModule,
     RolesModule,
     GroupsModule,
     PermissionsModule,
+    MembershipsModule,
   ],
   controllers: [AppController],
   providers: [
