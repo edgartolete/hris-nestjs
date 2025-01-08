@@ -232,6 +232,8 @@ export class AuthService {
       throw new InternalServerErrorException('update failed.', err.message);
     }
 
+    this.saveAccessToken(accessToken, userId);
+
     return { accessToken, refreshToken };
   }
 

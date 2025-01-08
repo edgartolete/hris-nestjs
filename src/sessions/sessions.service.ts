@@ -77,7 +77,8 @@ export class SessionsService {
           isActive: true,
         },
       )
-      .getOne();
+      .execute()
+      .then((res) => res[0]);
   }
 
   async update(updateSessionDto: UpdateSessionDto) {
