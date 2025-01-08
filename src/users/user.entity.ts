@@ -1,4 +1,6 @@
 import { IsEmail } from 'class-validator';
+import { Membership } from 'src/groups/entities/membership.entity';
+import { Role } from 'src/roles/entities/role.entity';
 import { Session } from 'src/sessions/session.entity';
 import {
   Entity,
@@ -6,9 +8,10 @@ import {
   PrimaryGeneratedColumn,
   DeleteDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -39,5 +42,11 @@ export class User {
   deletedAt?: Date;
 
   @OneToMany(() => Session, (session) => session.user)
-  session: Session[];
+  sessions: Session[];
+
+  @OneToMany(() => Membership, (membership) => membership.user)
+  memberships: Membership[];
+
+  @ManyToMany(() => Role, (role) => role.users)
+  roles: Role[];
 }

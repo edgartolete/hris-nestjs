@@ -11,7 +11,7 @@ export class UsersService {
     return await this.dataSource
       .createQueryBuilder()
       .insert()
-      .into('user')
+      .into(User)
       .values({ ...createUser })
       .execute();
   }

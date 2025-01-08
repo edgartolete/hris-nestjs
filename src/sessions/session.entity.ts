@@ -9,14 +9,14 @@ import {
   Unique,
 } from 'typeorm';
 
-@Entity()
+@Entity('sessions')
 @Unique(['refreshToken'])
 export class Session {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, (user) => user.sessions, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Column()

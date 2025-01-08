@@ -16,6 +16,12 @@ import { Logger } from './logger/logger.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronService } from './cron/cron.service';
 import { RolesModule } from './roles/roles.module';
+import { GroupsModule } from './groups/groups.module';
+import { PermissionsModule } from './permissions/permissions.module';
+import { Role } from './roles/entities/role.entity';
+import { Permission } from './permissions/entities/permission.entity';
+import { Group } from './groups/entities/group.entity';
+import { Membership } from './groups/entities/membership.entity';
 
 @Module({
   imports: [
@@ -37,7 +43,7 @@ import { RolesModule } from './roles/roles.module';
         username: configService.get('DB_USER'),
         password: configService.get('MYSQL_ROOT_PASSWORD'),
         database: configService.get('MYSQL_DATABASE'),
-        entities: [User, Session, Logger],
+        entities: [User, Session, Logger, Role, Permission, Group, Membership],
         synchronize: configService.get('NODE_ENV') === 'development',
       }),
     }),
@@ -48,6 +54,8 @@ import { RolesModule } from './roles/roles.module';
       },
     ]),
     RolesModule,
+    GroupsModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [
