@@ -303,7 +303,7 @@ export class AuthService {
 
     const user = await this.userService.findOneById(userId);
 
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       throw new BadRequestException('Email is already verified');
     }
 
@@ -347,7 +347,7 @@ export class AuthService {
 
     this.cacheManager.del(`email-verify-${userId}`);
 
-    return await this.userService.updateVerifiedStatus(userId, true);
+    return await this.userService.updateEmailVerifiedStatus(userId, true);
   }
 
   async forgotEmailRequest(b: ForgotPasswordRequestDto) {

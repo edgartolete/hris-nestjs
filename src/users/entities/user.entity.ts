@@ -38,6 +38,9 @@ export class User {
   @Column({ default: false })
   isVerified: boolean;
 
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
   @DeleteDateColumn()
   deletedAt?: Date;
 

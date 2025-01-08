@@ -72,12 +72,13 @@ export class UsersService {
     return `This action removes a #${id} user`;
   }
 
-  async updateVerifiedStatus(id: number, newVerifiedStatus: boolean) {
+  async updateEmailVerifiedStatus(id: number, newVerifiedStatus: boolean) {
     return await this.dataSource
       .createQueryBuilder()
       .update(User)
       .set({
         isVerified: newVerifiedStatus,
+        isEmailVerified: newVerifiedStatus,
       })
       .where('id = :id', { id })
       .execute();
