@@ -23,6 +23,7 @@ import { Permission } from './permissions/entities/permission.entity';
 import { Group } from './groups/entities/group.entity';
 import { Membership } from './memberships/entities/membership.entity';
 import { MembershipsModule } from './memberships/memberships.module';
+import { ProfilesModule } from './profiles/profiles.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { MembershipsModule } from './memberships/memberships.module';
     GroupsModule,
     PermissionsModule,
     MembershipsModule,
+    ProfilesModule,
   ],
   controllers: [AppController],
   providers: [
