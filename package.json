@@ -39,6 +39,7 @@
     "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
     "helmet": "^8.0.0",
+    "log4js": "^6.9.1",
     "mongoose": "^8.8.0",
     "mysql2": "^3.11.3",
     "passport": "^0.7.0",
