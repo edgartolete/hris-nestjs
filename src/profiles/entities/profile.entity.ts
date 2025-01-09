@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { User } from 'src/users/entities/user.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
 
 @Entity('profiles')
 export class Profile {
@@ -10,4 +11,7 @@ export class Profile {
 
   @Column({ nullable: false })
   lastName: string;
+
+  @OneToOne(() => User, (user) => user.profile, { cascade: true })
+  user: User;
 }

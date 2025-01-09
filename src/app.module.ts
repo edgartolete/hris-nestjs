@@ -24,6 +24,7 @@ import { Group } from './groups/entities/group.entity';
 import { Membership } from './memberships/entities/membership.entity';
 import { MembershipsModule } from './memberships/memberships.module';
 import { ProfilesModule } from './profiles/profiles.module';
+import { Profile } from './profiles/entities/profile.entity';
 
 @Module({
   imports: [
@@ -42,8 +43,17 @@ import { ProfilesModule } from './profiles/profiles.module';
         username: configService.get('DB_USER'),
         password: configService.get('MYSQL_ROOT_PASSWORD'),
         database: configService.get('MYSQL_DATABASE'),
-        entities: [User, Session, Logger, Role, Permission, Group, Membership],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        entities: [
+          User,
+          Profile,
+          Session,
+          Logger,
+          Role,
+          Permission,
+          Group,
+          Membership,
+        ],
+        synchronize: true,
       }),
     }),
     ThrottlerModule.forRoot([

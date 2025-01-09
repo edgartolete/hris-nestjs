@@ -17,15 +17,15 @@ export class Membership {
   id: number;
 
   @ManyToOne(() => User, (user) => user.memberships, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @ManyToOne(() => Group, (group) => group.memberships, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'group_id' })
+  @JoinColumn({ name: 'groupId' })
   group: Group;
 
   @ManyToOne(() => Role, (role) => role.memberships, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'role_id' })
+  @JoinColumn({ name: 'roleId' })
   role: Role;
 
   @CreateDateColumn()

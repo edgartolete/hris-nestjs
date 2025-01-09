@@ -1,5 +1,6 @@
 import { IsEmail } from 'class-validator';
 import { Membership } from 'src/memberships/entities/membership.entity';
+import { Profile } from 'src/profiles/entities/profile.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Session } from 'src/sessions/session.entity';
 import {
@@ -9,6 +10,8 @@ import {
   DeleteDateColumn,
   OneToMany,
   ManyToMany,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('users')
@@ -43,6 +46,10 @@ export class User {
 
   @DeleteDateColumn()
   deletedAt?: Date;
+
+  @OneToOne(() => Profile, (profile) => profile.user)
+  @JoinColumn() // user is owning side
+  profile: Profile;
 
   @OneToMany(() => Session, (session) => session.user)
   sessions: Session[];
