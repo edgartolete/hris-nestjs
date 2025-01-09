@@ -16,8 +16,12 @@ export class UsersService {
       .execute();
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll() {
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('user')
+      .from(User, 'user')
+      .execute();
   }
 
   async findOneById(id: number): Promise<User | null> {
