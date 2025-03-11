@@ -1,19 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { DataSource } from 'typeorm';
+import { Role } from './entities/role.entity';
 
 @Injectable()
 export class RolesService {
-  create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
+  constructor(private dataSource: DataSource) {}
+
+  async create(createRoleDto: CreateRoleDto) {
+    return await this.dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(Role)
+      .values({ ...createRoleDto })
+      .execute();
   }
 
-  findAll() {
-    return `This action returns all roles`;
+  async findAll() {
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('role')
+      .from(Role, 'role')
+      .execute();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
+  async findOne(id: number) {
+    return await this.dataSource
+      .createQueryBuilder()
+      .select('role')
+      .from(Role, 'role')
+      .where('role.id = :id', { id })
+      .execute();
   }
 
   update(id: number, updateRoleDto: UpdateRoleDto) {
