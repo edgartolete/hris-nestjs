@@ -11,7 +11,7 @@ import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
-@Controller('profiles')
+@Controller('api/v1/profiles')
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
