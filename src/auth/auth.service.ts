@@ -20,6 +20,7 @@ import { LogoutUserDto } from './dto/logout-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EmailTemplateEnum, UtilsService } from 'src/utils/utils.service';
 import { ForgotPasswordRequestDto } from './dto/forgot-password.dto';
+import { config } from 'src/config';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -328,8 +329,8 @@ export class AuthService {
     await this.cacheManager.set(
       `email-verify-${userId}`,
       random6,
-      1000 * 60 * 3,
-    ); // 3 minutes TTL
+      config.verifyEmail.expiry,
+    );
 
     return data;
   }
