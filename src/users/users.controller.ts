@@ -15,7 +15,7 @@ import { TokenAuthGuard } from 'src/auth/guards/token-auth.guard';
 import { RequestWithTokenPayload } from 'src/types';
 import { UsersService } from './users.service';
 
-@Controller('api/v1/users')
+@Controller('v1/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

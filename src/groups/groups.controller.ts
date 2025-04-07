@@ -12,7 +12,7 @@ import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 
-@Controller('api/v1/groups')
+@Controller('v1/groups')
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 

@@ -11,7 +11,7 @@ import { MembershipsService } from './memberships.service';
 import { CreateMembershipDto } from './dto/create-membership.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
 
-@Controller('api/v1/memberships')
+@Controller('v1/memberships')
 export class MembershipsController {
   constructor(private readonly membershipsService: MembershipsService) {}
 
