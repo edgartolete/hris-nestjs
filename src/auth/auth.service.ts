@@ -21,6 +21,7 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EmailTemplateEnum, UtilsService } from 'src/utils/utils.service';
 import { ForgotPasswordRequestDto } from './dto/forgot-password.dto';
 import { config } from 'src/config';
+import { LoggerService } from 'src/logger/logger.service';
 
 type SignInData = { userId: number; username: string };
 type AuthResult = {
@@ -39,6 +40,7 @@ export class AuthService {
     private configService: ConfigService,
     private sessionService: SessionsService,
     private utilsService: UtilsService,
+    private loggerService: LoggerService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
@@ -170,6 +172,11 @@ export class AuthService {
       const { affected } = await this.sessionService.deactivate(
         logoutUserDto.refreshToken,
       );
+
+      this.loggerService.add({
+        context: 'Logout deactivate',
+        input: { affected, logoutUserDto },
+      });
 
       return affected;
     } catch (err) {

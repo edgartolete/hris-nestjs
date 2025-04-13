@@ -17,7 +17,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { RenewRefreshTokenDto } from './dto/refresh-token.dto';
+import {
+  LogoutRefreshTokenDto,
+  RenewRefreshTokenDto,
+} from './dto/refresh-token.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import {
   EmailVerifyRequestDto,
@@ -28,10 +31,14 @@ import {
   ForgotPasswordRequestDto,
   ForgotPasswordSubmitDto,
 } from './dto/forgot-password.dto';
+import { LoggerService } from 'src/logger/logger.service';
 
 @Controller('v1/auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private loggerService: LoggerService,
+  ) {}
 
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('local'))
@@ -44,7 +51,17 @@ export class AuthController {
 
     const data = await this.authService.signIn(req.user, ipAddress, userAgent);
 
-    res.cookie('refreshToken', data.refreshToken);
+    res.cookie('refreshToken', data.refreshToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+    });
+
+    res.cookie('accessToken', data.accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+    });
 
     return { message: 'You are now logged in', data };
   }
@@ -64,7 +81,11 @@ export class AuthController {
       userAgent,
     );
 
-    res.cookie('refreshToken', result.refreshToken);
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'lax',
+    });
 
     return res
       .status(HttpStatus.CREATED)
@@ -74,10 +95,19 @@ export class AuthController {
   @UseGuards(TokenAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body?: LogoutRefreshTokenDto,
+  ) {
     const accessToken = req?.headers?.authorization?.split(' ')[1];
 
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken = req.cookies['refreshToken'] || body.refreshToken;
+
+    this.loggerService.add({
+      context: 'refreshToken not receiving',
+      input: { cookies: req.cookies },
+    });
 
     const success = await this.authService.logout({
       accessToken,
@@ -93,6 +123,16 @@ export class AuthController {
     return res
       .status(HttpStatus.OK)
       .json({ message: 'Successfully logged-out.' });
+  }
+
+  @UseGuards(TokenAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('verify-token')
+  async verifyToken(@Req() req: RequestWithTokenPayload) {
+    return {
+      message: 'Successfully verified token.',
+      data: { user: req.user.userId },
+    };
   }
 
   @Post('refresh')

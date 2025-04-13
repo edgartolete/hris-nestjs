@@ -5,3 +5,9 @@ export class RenewRefreshTokenDto {
   @IsOptional()
   refreshToken: string;
 }
+
+export class LogoutRefreshTokenDto {
+  @IsString()
+  @IsOptional()
+  refreshToken: string;
+}
