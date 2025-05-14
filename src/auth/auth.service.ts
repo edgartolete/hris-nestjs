@@ -27,8 +27,6 @@ type SignInData = { userId: number; username: string };
 type AuthResult = {
   accessToken: string;
   refreshToken: string;
-  userId: number;
-  username: string;
   result?: any;
 };
 
@@ -79,8 +77,6 @@ export class AuthService {
     const sessionData = {
       accessToken,
       refreshToken,
-      username: user.username,
-      userId: user.userId,
     };
 
     const updateData = {
@@ -161,7 +157,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      ...payload,
+      ...{ username, id: identifiers[0].id, ...rest },
     };
   }
 
@@ -458,12 +454,8 @@ export class AuthService {
     const [err, res] =
       await this.sessionService.updateStoredRefreshToken(updateData);
 
-    if (err) {
+    if (err || res.affected === 0) {
       throw new InternalServerErrorException(err);
-    }
-
-    if (res.affected > 0) {
-      return sessionData;
     }
 
     const [error] = await this.sessionService.create(updateData);

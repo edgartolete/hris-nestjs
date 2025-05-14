@@ -38,7 +38,7 @@ export class UsersController {
     delete user.deletedAt;
     delete user.isActive;
 
-    return user;
+    return { data: user, message: 'User Found' };
   }
 
   // @Get(':id')

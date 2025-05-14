@@ -32,12 +32,14 @@ import {
   ForgotPasswordSubmitDto,
 } from './dto/forgot-password.dto';
 import { LoggerService } from 'src/logger/logger.service';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('v1/auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
     private loggerService: LoggerService,
+    private readonly usersService: UsersService,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -63,7 +65,12 @@ export class AuthController {
       secure: false,
     });
 
-    return { message: 'You are now logged in', data };
+    const user = await this.usersService.findOneById(req.user.userId);
+
+    delete user.password;
+    delete user.deletedAt;
+
+    return { message: 'You are now logged in', data: { ...data, ...user } };
   }
 
   @Post('register')
@@ -129,9 +136,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('verify-token')
   async verifyToken(@Req() req: RequestWithTokenPayload) {
+    const user = await this.usersService.findOneById(req.user.userId);
+
+    delete user.password;
+    delete user.deletedAt;
+    delete user.isActive;
+
     return {
       message: 'Successfully verified token.',
-      data: { user: req.user.userId },
+      data: { user },
     };
   }
 
