@@ -70,4 +70,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 ## License
 
+## Authentication
+you can refresh the token automatically on client-side using setInterval and request that has credentials:true to send the cookies automatically to the server
+
 Nest is [MIT licensed](LICENSE).

@@ -120,9 +120,14 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() body?: LogoutRefreshTokenDto,
   ) {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+
     const accessToken = req?.headers?.authorization?.split(' ')[1];
 
-    const refreshToken = req.cookies['refreshToken'] || body.refreshToken;
+    const refreshToken = isProduction
+      ? req.cookies['refreshToken']
+      : body.refreshToken;
 
     this.loggerService.add({
       context: 'refreshToken not receiving',
@@ -169,9 +174,12 @@ export class AuthController {
   ) {
     const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'] || '';
-    const currentRefreshToken = req.cookies['refreshToken'];
+    const cookieRefreshToken = req.cookies['refreshToken'];
 
-    const token = body.refreshToken || currentRefreshToken || '';
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+
+    const token = isProduction ? cookieRefreshToken : body.refreshToken || '';
 
     if (!token) {
       return res.json({ message: 'no token provided' });
@@ -184,12 +192,14 @@ export class AuthController {
 
     res.status(HttpStatus.CREATED);
 
+    const tokens = {
+      accessToken,
+      refreshToken,
+    };
+
     return {
       message: 'Successfully renew RefreshToken.',
-      data: {
-        accessToken,
-        refreshToken,
-      },
+      data: !isProduction ? tokens : {},
     };
   }
 
