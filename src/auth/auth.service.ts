@@ -154,9 +154,16 @@ export class AuthService {
       throw new InternalServerErrorException('refreshToken inserting failed');
     }
 
-    return {
+    const tokens = {
       accessToken,
       refreshToken,
+    };
+
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+
+    return {
+      ...(!isProduction ? tokens : {}),
       ...{ username, id: identifiers[0].id, ...rest },
     };
   }

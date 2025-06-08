@@ -33,6 +33,7 @@ import {
 } from './dto/forgot-password.dto';
 import { LoggerService } from 'src/logger/logger.service';
 import { UsersService } from 'src/users/users.service';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('v1/auth')
 export class AuthController {
@@ -40,6 +41,7 @@ export class AuthController {
     private authService: AuthService,
     private loggerService: LoggerService,
     private readonly usersService: UsersService,
+    private configService: ConfigService,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -56,21 +58,26 @@ export class AuthController {
     res.cookie('refreshToken', data.refreshToken, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false,
+      secure: true,
     });
 
     res.cookie('accessToken', data.accessToken, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false,
+      secure: true,
     });
 
     const user = await this.usersService.findOneById(req.user.userId);
 
     delete user.password;
     delete user.deletedAt;
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
 
-    return { message: 'You are now logged in', data: { ...data, ...user } };
+    return {
+      message: 'You are now logged in',
+      data: { ...(!isProduction ? data : {}), ...user },
+    };
   }
 
   @Post('register')
@@ -90,8 +97,14 @@ export class AuthController {
 
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
       sameSite: 'lax',
+      secure: true,
+    });
+
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: true,
     });
 
     return res
