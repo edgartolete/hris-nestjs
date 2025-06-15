@@ -25,6 +25,7 @@ import { Membership } from './memberships/entities/membership.entity';
 import { MembershipsModule } from './memberships/memberships.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { Profile } from './profiles/entities/profile.entity';
+import { TenantKeys } from './utils/tenantKeys';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { Profile } from './profiles/entities/profile.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
+        name: TenantKeys.PSE_ANALYZER,
         type: 'mysql',
         host: configService.get('DB_HOST'),
         port: +configService.get('DB_PORT'),

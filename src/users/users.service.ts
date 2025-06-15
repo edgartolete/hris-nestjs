@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { DataSource } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { TenantKeys } from 'src/utils/tenantKeys';
 
 @Injectable()
 export class UsersService {
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource(TenantKeys.PSE_ANALYZER)
+    private dataSource: DataSource,
+  ) {}
 
   async create(createUser: CreateUserDto) {
     return await this.dataSource
